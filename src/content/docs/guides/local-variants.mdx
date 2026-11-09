@@ -1,0 +1,23 @@
+---
+title: Local page variants
+description: Switch between precompiled selection pages locally and confirm the chosen value with a server action.
+---
+
+import { Code } from '@astrojs/starlight/components';
+import variants from '../../../examples/variants.yml?raw';
+
+Use `book.update: local-pages` to switch between a finite set of precompiled book pages. The `variants` example declares an archer, mage and warrior page; each sets the session variable `chosen` for that page.
+
+## Selection and confirmation
+
+A selection button's entire click list must contain only `{type: local-page, value: variant_id}`. This changes the displayed page locally. It does not send a server action. The separate **Confirm** button sends the current page's selection with `{type: select, value: '{session.chosen}'}` and then displays the confirmation message.
+
+The selected overlay and label are compiled for each variant. Changing the page does not persist the selection on the server until a server action is invoked. See [actions](/configuration/actions/#navigation-and-selection) and [renderer limits](/reference/book-renderer/) before combining local pages with other controls.
+
+## Complete screen
+
+On an existing installation, copy the source screen into `plugins/CraftCanvas/screens/variants.yml`, retain the bundled assets, reload and load the updated resource pack, then run `/cc open variants`.
+
+The example below is a bundled copy of [the plugin's screen](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/variants.yml). Keep `src/examples/variants.yml` in sync when that screen changes. Bundling the example lets the documentation build independently of the plugin repository.
+
+<Code code={variants} lang="yaml" title="screens/variants.yml" />

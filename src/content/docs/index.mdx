@@ -1,0 +1,47 @@
+---
+title: CraftCanvas
+description: Build graphical Minecraft menus in YAML with custom artwork, interactive controls and a Java/Kotlin addon API.
+template: splash
+hero:
+  tagline: Your artwork. Your menus. A vanilla Minecraft client.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get started
+      link: /start/installation/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/Naimadx123/CraftCanvas
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Graphical menus from YAML
+
+CraftCanvas uses signed books, Adventure components and resource-pack glyphs to build graphical menus on Paper and Folia **1.21.11 through 26.3**. Players use a matching vanilla client and accept your resource pack. Nexo, CraftEngine and ItemsAdder are optional.
+
+<CardGrid stagger>
+  <Card title="Build with your own artwork" icon="pencil">
+    Position PNGs, text and controls with YAML. Reuse themes and templates across screens.
+  </Card>
+  <Card title="Make menus interactive" icon="setting">
+    Add selection states, tooltips, variables, conditions, navigation and server actions.
+  </Card>
+  <Card title="Bring your resource pack" icon="open-book">
+    Generate a standalone pack or integrate with Nexo, CraftEngine and ItemsAdder.
+  </Card>
+  <Card title="Extend with Java or Kotlin" icon="puzzle">
+    Open screens from addons, update sessions and register callbacks through the public API.
+  </Card>
+</CardGrid>
+
+## Start building
+
+<CardGrid>
+  <LinkCard title="Your first screen" description="Register artwork and open a working menu." href="/getting-started/first-screen/" />
+  <LinkCard title="YAML reference" description="Find every field, default and renderer limit." href="/reference/yaml/" />
+  <LinkCard title="Local page variants" description="Explore the complete class selection example." href="/guides/local-variants/" />
+  <LinkCard title="Developer quick start" description="Build your first Java or Kotlin addon." href="/developers/quick-start/" />
+</CardGrid>

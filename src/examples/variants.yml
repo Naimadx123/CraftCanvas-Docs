@@ -1,0 +1,108 @@
+schema-version: 1
+id: variants
+backend: book-glyph
+title: '<gold>Local selection variants'
+requires: [glyph-rendering, component-click, component-tooltip, no-blur]
+book:
+  update: local-pages
+  variants:
+    archer: {chosen: archer}
+    mage: {chosen: mage}
+    warrior: {chosen: warrior}
+layout:
+  reference-width: 512
+  reference-height: 320
+  anchor: horizontal-center
+  offset-y: -30
+  profile: normal
+  overlap: reject-interactive
+session:
+  timeout-ticks: 2400
+variables:
+  chosen:
+    type: string
+    default: archer
+components:
+  background:
+    type: image
+    size: {width: 512, height: 320}
+    asset: {provider: native, kind: image, id: 'craftcanvas:book_panel'}
+  heading:
+    type: text
+    position: {x: 24, y: 44}
+    size: {width: 420, height: 18}
+    layer: 10
+    text: '<gold><bold>SELECT A CLASS'
+  selected:
+    type: text
+    position: {x: 24, y: 220}
+    size: {width: 430, height: 18}
+    layer: 20
+    text: '<white>Selected: {session.chosen}'
+  close:
+    type: button
+    position: {x: 470, y: 20}
+    size: {width: 36, height: 36}
+    layer: 100
+    asset: {provider: native, kind: image, id: 'craftcanvas:close'}
+    tooltip: ['<white>Close this window']
+    actions:
+      click: [{type: close}]
+  archer:
+    type: button
+    position: {x: 40, y: 134}
+    size: {width: 48, height: 48}
+    layer: 30
+    asset: {provider: native, kind: image, id: 'craftcanvas:archer'}
+    tooltip: ['<gold>Archer', '<gray>Click to select this class.']
+    states:
+      selected:
+        when:
+          variable-equals: {name: chosen, value: archer}
+        overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    actions:
+      click:
+        - {type: local-page, value: archer}
+  mage:
+    type: button
+    position: {x: 180, y: 134}
+    size: {width: 48, height: 48}
+    layer: 30
+    asset: {provider: native, kind: image, id: 'craftcanvas:mage'}
+    tooltip: ['<gold>Mage', '<gray>Click to select this class.']
+    states:
+      selected:
+        when:
+          variable-equals: {name: chosen, value: mage}
+        overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    actions:
+      click:
+        - {type: local-page, value: mage}
+  warrior:
+    type: button
+    position: {x: 320, y: 134}
+    size: {width: 48, height: 48}
+    layer: 30
+    asset: {provider: native, kind: image, id: 'craftcanvas:warrior'}
+    tooltip: ['<gold>Warrior', '<gray>Click to select this class.']
+    states:
+      selected:
+        when:
+          variable-equals: {name: chosen, value: warrior}
+        overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    actions:
+      click:
+        - {type: local-page, value: warrior}
+  confirm:
+    type: button
+    position: {x: 350, y: 260}
+    size: {width: 140, height: 28}
+    padding: 7
+    layer: 100
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    text: '<green>CONFIRM'
+    tooltip: ['<gray>Send this page choice to the server.']
+    actions:
+      click:
+        - {type: select, value: '{session.chosen}'}
+        - {type: message, text: '<green>Server confirmed {session.chosen}.'}
