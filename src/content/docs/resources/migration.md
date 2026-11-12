@@ -34,12 +34,18 @@ Addons can use `openAsync`, `sessionAsync`, `setVariablesAsync`, `closeAsync` an
 
 The current examples use a transparent handheld chassis, two-page app launcher, flat pixel-art wheel, first-open startup animation/sound and hover outlines inside the screen. Physical console controls opt out of shader hover. The shipped config enables both shader switches, the default outline and `pack.hide-vanilla-book`.
 
-Existing binary assets and screens are not overwritten automatically. Copy the updated screens, supporting templates, manifests, actions and PNG/OGG files from the current JAR or sources, preserving any local changes. Keep each manifest's dimensions in sync with its source images, including the physical console controls. Copy the new `screens/reward_wheel.yml` to enable its shared SPIN/A cooldown; replacing only the JAR does not add it to an existing screen. Keep `persistent-player-data: true` to retain cooldowns across reconnects and restarts.
+Existing binary assets and screens are not overwritten automatically. Copy the updated screens, supporting templates, manifests, actions and PNG/OGG files from the current JAR or sources, preserving any local changes. Keep each manifest's dimensions in sync with its source images, including the physical console controls. Copy the new `screens/reward_wheel.yml` together with `actions/wheel_spin.yml` to enable its shared SPIN/A action and cooldown; replacing only the JAR does not add it to an existing screen. Keep `persistent-player-data: true` to retain cooldowns across reconnects and restarts.
 
-The startup animation runs once per screen/player connection. Reconnect to replay it. `PACK_SETUP.txt` is installed automatically when missing. Rebuild and distribute the resulting pack after copying artwork or changing layout.
+The startup animation runs once per screen/player connection. Reconnect to replay it. Rebuild and distribute the resulting pack after copying artwork or changing layout.
 
 ## Adding an example
 
-To add the wheel to an existing installation, copy `screens/reward_wheel.yml` and retain its parent `frame`. Its resources are `actions/wheel_reward.yml`, `assets/wheel.yml`, the 48 wheel PNGs and pointer PNG. Missing bundled non-screen files are installed normally. Reload, load the rebuilt pack and run `/cc open reward_wheel`.
+To add the wheel to an existing installation, copy `screens/reward_wheel.yml` and retain its parent `frame`. Its resources are `actions/wheel_spin.yml`, `actions/wheel_reward.yml`, `assets/wheel.yml`, the 48 wheel PNGs and pointer PNG. Missing bundled non-screen files are installed normally. Reload, load the rebuilt pack and run `/cc open reward_wheel`.
 
 For a reusable animation without reward logic, copy [examples/animation.yml](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/animation.yml). It uses existing UI artwork. Follow the [animation guide](/guides/animations/) to replace its frames with your own.
+
+## Code-defined screens and pack location
+
+Addons can now register screens and native resources in memory with `registerScreen`, then publish them through a full `reload()`. Session-guarded state reads and component overrides are described in [code-defined screens](/developers/code-screens/) and [component state](/developers/component-state/). Existing YAML and bundle workflows remain supported.
+
+The public ZIP is now `plugins/CraftCanvas/craftcanvas.zip`. Update hosting scripts that read the former `.data/generated-pack/` ZIP location; internal release copies and `sha1.txt` stay there. The separate setup text file is no longer included.

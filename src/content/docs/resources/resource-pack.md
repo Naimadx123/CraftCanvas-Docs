@@ -2,7 +2,7 @@
 title: "Resource pack"
 ---
 
-The plugin installs `plugins/CraftCanvas/PACK_SETUP.txt` with the setup steps for Nexo, standalone hosting and external senders. Startup logs point to this file and the generated ZIP.
+CraftCanvas writes the public generated ZIP directly to `plugins/CraftCanvas/craftcanvas.zip`. Startup logs show its location. Internal manifests, character IDs, hashes and immutable export copies stay under `.data/generated-pack/`.
 
 ## Addon bundles
 
@@ -25,7 +25,7 @@ Set `pack.nexo-auto-export: false` to use manual workflows below. This does not 
 ## Standalone workflow
 
 1. Run `/cc pack build` or `./gradlew.bat examplePack` for the shipped examples.
-2. Take `plugins/CraftCanvas/.data/generated-pack/craftcanvas.zip` and its `sha1.txt`. The Gradle example task writes them under `build/examples/.data/generated-pack/`. A content-addressed immutable copy also lives under `.data/generated-pack/releases/<sha1>/`.
+2. Take `plugins/CraftCanvas/craftcanvas.zip`. Its hash is in `plugins/CraftCanvas/.data/generated-pack/sha1.txt`. The Gradle example task writes the public ZIP to `build/examples/craftcanvas.zip`. A content-addressed immutable export copy also lives under `.data/generated-pack/releases/<sha1>/`.
 3. Host the ZIP at a direct HTTP(S) URL that clients can reach. CraftCanvas does not silently start a web server or upload to a third party.
 4. Set `pack.sender: craftcanvas` and `pack.url` to that direct download URL. Leave `pack.sha1` empty to use the generated hash. If CraftCanvas is the effective sender and the URL is empty, opening reports `PACK_UNAVAILABLE` immediately, even with `pack.missing: wait`.
 5. Reload. The plugin sends one named pack and records statuses. Wait for the expected pack UUID to reach `SUCCESSFULLY_LOADED`; `/cc debug <player>` shows identities and statuses.

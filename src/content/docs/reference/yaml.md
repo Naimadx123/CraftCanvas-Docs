@@ -53,7 +53,7 @@ The Default column describes parser fallbacks when a field is omitted. The shipp
 | pack.sha1 | string | empty | Generated hash when empty, otherwise 40 hexadecimal characters |
 | pack.missing | enum | deny | deny or wait; shipped file selects wait |
 
-Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nexo handling, UUID/hash come from its verified generated/uploaded pack through the public API; the configured standalone URL/hash and external UUID are not used. Set `pack.nexo-auto-export: false` for manual routing. `wait` queues an opening until loading or cancellation. When the effective sender is `craftcanvas` and `pack.url` is empty, opening fails immediately with `PACK_UNAVAILABLE` instead of queuing. Startup logs and administrator command replies point to the installed `PACK_SETUP.txt`. Pack-free screen fallbacks are rejected because every menu needs glyph resources. Asset-level fallbacks remain supported.
+Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nexo handling, UUID/hash come from its verified generated/uploaded pack through the public API; the configured standalone URL/hash and external UUID are not used. Set `pack.nexo-auto-export: false` for manual routing. `wait` queues an opening until loading or cancellation. When the effective sender is `craftcanvas` and `pack.url` is empty, opening fails immediately with `PACK_UNAVAILABLE` instead of queuing. Startup logs and administrator command replies point to `plugins/CraftCanvas/craftcanvas.zip` and the pack configuration. Pack-free screen fallbacks are rejected because every menu needs glyph resources. Asset-level fallbacks remain supported.
 
 ## Screen fields
 

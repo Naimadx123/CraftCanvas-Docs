@@ -42,3 +42,7 @@ No visibility/enabled conditions, callback conditions, placeholders, permissions
 Collections are defensively copied and unmodifiable, including nested variable/component maps, profile maps, capability sets, root/child lists and trigger sets. Configuration preparation does not publish metadata; successful application publishes a new catalog. Rejection before application retains the previous catalog. An application rollback can publish an equivalent new snapshot, so do not use object identity as a durable version or session token.
 
 Compiled [Java](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/java/example/CanvasScreenDiscovery.java) and [Kotlin](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/kotlin/example/CanvasScreenDiscoveryKotlin.kt) examples inspect declarations and pass a validated greeting to `openAsync`, retaining its normal runtime checks. [Session snapshots](/developers/sessions/) provide live values on the player's owner; the catalog provides declarations on any thread.
+
+## Code-defined screens
+
+Published code-defined screens appear in the same catalog as YAML screens. `screenDefinition(id)` additionally returns detached schema data; code definitions retain their native resource declarations. A staged registration is not visible until a successful full reload. See [registering code screens](/developers/code-screens/) and [reading effective session state](/developers/component-state/).

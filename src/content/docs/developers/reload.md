@@ -40,3 +40,7 @@ Reload does not undo administrator edits, installed bundles or default-field syn
 SUCCESS does not confirm hosting, asynchronous Nexo generation/upload, player acceptance or client rendering. Pack senders and SUCCESSFULLY_LOADED acknowledgements remain authoritative. Immediate provider/send failures become warnings after application, allowing other providers and players to proceed. Later asynchronous sender failures use the sender's normal diagnostics.
 
 Never block the server thread with `get()` or `join()`. Continuations attached to completed futures may run on their caller's thread; asynchronous continuations may use workers. Schedule Bukkit operations appropriately. Shutdown completes pending requests without applying late worker results. Cancelling or externally completing the returned future changes only that caller's view; it does not cancel the operation or release its guard. Disabling an addon alone does not cancel a global reload it requested.
+
+## Registered screens
+
+`registerScreen` stages in-memory definitions; use `reload()` without a screen ID after adding, replacing or removing registrations. A selected-screen reload is rejected while the registration revision differs from the published configuration. If registrations change during preparation, application is rejected and the published configuration stays active. Retry a full reload once registration is stable. Closing a screen registration or disabling its owner immediately withdraws that screen and inherited dependents, closing affected sessions even before the next reload.

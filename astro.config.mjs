@@ -61,6 +61,8 @@ export default defineConfig({
           items: [
             { label: 'Quick start', slug: 'developers/quick-start' },
             { label: 'API reference', slug: 'developers/api' },
+            { label: 'Code-defined screens', slug: 'developers/code-screens' },
+            { label: 'Component state and edits', slug: 'developers/component-state' },
             { label: 'Sessions and presentation', slug: 'developers/sessions' },
             { label: 'GUI controls', slug: 'developers/gui' },
             { label: 'Dynamic lists', slug: 'developers/dynamic-lists' },

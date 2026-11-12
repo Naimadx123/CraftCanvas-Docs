@@ -296,7 +296,7 @@ Leave `pack.nexo-auto-export: true` in CraftCanvas's `config.yml`. CraftCanvas w
 
 ### Without Nexo
 
-1. Take `plugins/CraftCanvas/.data/generated-pack/craftcanvas.zip` from the successful build.
+1. Take `plugins/CraftCanvas/craftcanvas.zip` from the successful build.
 2. Upload it to your own host at a direct HTTP(S) ZIP URL.
 3. In `plugins/CraftCanvas/config.yml`, set `pack.sender` to `craftcanvas`, `pack.url` to that URL and `pack.sha1` to an empty string to use the generated hash. Set `pack.nexo-auto-export` to false if you are deliberately bypassing an installed Nexo sender.
 4. Run `/cc reload`, accept the pack and wait for loading to finish.
