@@ -8,8 +8,8 @@ For position/box-scale animations of individual UI components, see [component an
 
 | Setting | Playback |
 | --- | --- |
-| `false` (default) | Changes the variable and reopens the book for each frame |
-| `true` | Displays a texture atlas and lets the client shader select frames; sends the start and final state |
+| `false` | Changes the variable and reopens the book for each frame |
+| `true` (shipped configuration) | Displays a texture atlas and lets the client shader select frames; sends the start and final state |
 
 Both modes use the same action, timing, cycles and server-selected `stop-at`. Both require `book.update: resend`; `local-pages` is rejected. Unrelated state updates can still resend a book during atlas playback without resetting its start time.
 
@@ -35,9 +35,52 @@ The longest possible playback must contain at most 256 displayed frames and 1200
 
 Declare `animation_frame` as a session string variable and bind it to graphics. This plays once at a fixed interval and ends on `frame_03`. Slowdown, cycles and `stop-at` are optional. One action timeline plays per session; use passive `autoplay` images for independent decorative loops. For interpolated movement/box scaling, use [component animation](/guides/interactive-ui/#component-animations). With `shaders.animations: false`, text can also display the changing frame variable.
 
-For randomized playback, first use `random-variable` on a separate session string variable, then supply that variable as `stop-at: '{result}'`. Every possible result must be a declared frame ID. `reward_wheel` combines these general actions with a 48-frame, six-prize example with equal server-selected probabilities. It grants one item before playback, preventing close/replay from granting that same spin twice. The example keeps spin state in the session. For daily limits or paid spins, persist eligibility in your addon before granting a reward. A full inventory rejects delivery and consumes that opening's spin. Paid or limited rewards need an addon-owned transaction/idempotency ledger independent of visual playback.
+For randomized playback, first use `random-variable` on a separate session string variable, then supply it as `stop-at: '{result}'`. Every possible result must be a declared frame ID. `reward_wheel` combines these actions with a 48-frame, six-prize example with equal server-selected probabilities. It grants one item before playback. SPIN and the physical A button share `cooldown: {seconds: 60, key: reward_wheel}` for each player, so reopening cannot grant another item during the minute. The temporary `spun` flag is cleared after playback, allowing another spin in the same screen after the cooldown expires. The deadline starts before delivery; a full inventory or later action failure still consumes that attempt. With `persistent-player-data: true`, it survives reconnects and restarts. For paid spins, daily quotas or exact-once rewards, use an addon-owned transaction ledger. See [button cooldowns](/guides/components/#button-cooldowns).
 
 With `shaders.animations: false`, each frame uses `openBook` and can flicker or reset focus. When enabled, the atlas runs locally between the start and final book updates. X, `/cc close`, disconnect, navigation, reload and disable cancel pending tasks. Close-only buttons retain valid close keys across redraws; other keys remain single-use. Escape does not reliably notify the server: a later frame in resend mode, or the final update in atlas mode, can reopen the book until gameplay resumes or the session is retired.
+
+## First-open startup animation
+
+The bundled `home` screen plays a 50-tick startup sequence and `craftcanvas:handheld_startup` sound on its first successful render for each player connection. Reopening home in the same connection skips it. Reconnect and use `/cc open home` to replay it. Queued, cancelled and failed opens do not consume the first opening. Closing a running intro stops its sound and does not replay it during that connection.
+
+Use `first-open` on another book screen in the same way. This complete example inherits the bundled frame and sound:
+
+```yaml
+schema-version: 1
+id: startup_demo
+extends: frame
+first-open:
+  variable: booting
+  duration-ticks: 50
+  sound: craftcanvas:handheld_startup
+  volume: 0.7
+  animations: [boot_logo]
+variables:
+  booting: {type: boolean, default: false}
+components:
+  heading:
+    text: '<aqua>Ready'
+    conditions:
+      visible: {variable-equals: {name: booting, value: false}}
+  boot_logo:
+    type: text
+    position: {x: 112, y: 128}
+    size: {width: 288, height: 20}
+    layer: 20
+    align: center
+    vertical-align: center
+    text: '<aqua><bold>CRAFTCANVAS'
+    conditions:
+      visible: {variable-equals: {name: booting, value: true}}
+    animation:
+      on-open: false
+      duration-ticks: 30
+      interval-ticks: 2
+      easing: ease-out
+      from: {y: 12, scale: 1.0}
+```
+
+The variable must be a session boolean with default `false`. `duration-ticks` accepts 2..1200 (default 50), `volume` accepts 0..1 (default 0.7), and `sound` is an optional namespaced sound ID. Native sounds must exist in an asset manifest. Each ID in `animations` must name a component with `animation.on-open: false`; its animation duration must fit inside the intro duration. Normal actions are blocked during the intro, while the unconditional close control remains usable. Shader animation is smooth when enabled and uses the discrete fallback otherwise.
 
 ## Enable atlas playback
 
@@ -121,7 +164,7 @@ The server chooses a value uniformly before playback. Every possible result must
 
 ## Fullscreen cinematics
 
-`backend: cinematic` displays a noninteractive HUD overlay through Adventure titles. It does not open a book or inventory, change held items, pause gameplay or capture input. It requires `shaders.animations: true`, Paper/Folia 1.21.11 and a matching vanilla client with the current pack. Profiles do not resize it: the shader fits the viewport.
+`backend: cinematic` displays a noninteractive HUD overlay through Adventure titles. It does not open a book or inventory, change held items, pause gameplay or capture input. It requires `shaders.animations: true`, supported Paper/Folia 1.21.11 through 26.3 and a matching vanilla client with the current pack. Profiles do not resize it: the shader fits the viewport.
 
 Copy [examples/cinematics](https://github.com/Naimadx123/CraftCanvas/tree/master/examples/cinematics) into `plugins/CraftCanvas/screens/cinematics/`, reload and load the pack. Open a preset with `/cc open cinematic_<effect>`, such as `/cc open cinematic_portal`. Presets are supplied for every effect below; use `cinematic_wipe_left` for `wipe-left`, and `cinematic_clip` for `frames`. Transition variants inherit `cinematic_eyes`, so retain that file. Its inherited actions play sounds and teleport the player; change the teleport destination or replace the action lists before using them on your server. The clip uses the bundled wheel artwork as a frame-sequence example.
 

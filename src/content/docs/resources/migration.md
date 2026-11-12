@@ -10,13 +10,13 @@ Bundled YAML files outside `screens/` gain missing default keys on startup and r
 
 Screen files are installed only into a fresh empty data directory. Existing screens are never merged, updated or recreated after deletion. New release examples must be copied manually from the JAR's `screens/` directory or project resources. Keep any supporting templates, shared actions and asset manifests with them. `.data/defaults-installed` records initial setup.
 
-Keep variable names, scopes and types stable to retain player preferences. Keep the player SQL database (`.data/data.db` for SQLite), `storage.yml`, `.data/addon-bundles/`, `.data/generated-pack/characters.yml` and pack-export ownership records in backups. An addon bundle `INSTALL` preserves its existing installation; an explicit administrator-requested `UPDATE` may update unchanged owned files or restore missing files. See [bundle ownership](/developers/bundles/).
+Keep variable names, scopes and types stable to retain player preferences. Keep `cooldown.key` stable when a cooldown should continue across updates; changing only the configured seconds affects future activations, not an existing deadline. Keep the player SQL database (`.data/data.db` for SQLite), `storage.yml`, `.data/addon-bundles/`, `.data/generated-pack/characters.yml` and pack-export ownership records in backups. An addon bundle `INSTALL` preserves its existing installation; an explicit administrator-requested `UPDATE` may update unchanged owned files or restore missing files. See [bundle ownership](/developers/bundles/).
 
 ## Resource packs
 
 Run `/cc validate`, then `/cc pack build`. Automatic Nexo export requests a combined-pack rebuild. For standalone hosting, replace the hosted ZIP and update or clear a pinned `pack.sha1`. Players must load the new pack before opening screens that require it. Provider-managed merged packs also need their builder to support the target Minecraft version.
 
-Do not delete the character registry during routine upgrades. It keeps allocations stable across builds. Do not combine registries from separate installations into the same font namespace.
+Do not delete the character registry during routine upgrades. Current builds preserve active glyph IDs and reclaim obsolete entries automatically, including registries filled by older build history. Do not combine registries from separate installations into the same font namespace.
 
 ## Changing Minecraft versions
 
@@ -29,6 +29,14 @@ The generated pack declares formats 75.0 through 97.1. If a provider merges it, 
 Keep the same screen YAML and assets. Install Folia-compatible resource, economy, placeholder and addon plugins. Player callbacks and events run on the player's owner and may execute concurrently for different players. Registrations and provider invalidation run globally.
 
 Addons can use `openAsync`, `sessionAsync`, `setVariablesAsync`, `closeAsync` and `withPlayer` instead of writing their own scheduling bridge. Existing synchronous player methods still require the owning entity thread. Registration and bundle requests require the global thread. See the [developer quick start](/developers/quick-start/).
+
+## Updating the handheld examples
+
+The current examples use a transparent handheld chassis, two-page app launcher, flat pixel-art wheel, first-open startup animation/sound and hover outlines inside the screen. Physical console controls opt out of shader hover. The shipped config enables both shader switches, the default outline and `pack.hide-vanilla-book`.
+
+Existing binary assets and screens are not overwritten automatically. Copy the updated screens, supporting templates, manifests, actions and PNG/OGG files from the current JAR or sources, preserving any local changes. Keep each manifest's dimensions in sync with its source images, including the physical console controls. Copy the new `screens/reward_wheel.yml` to enable its shared SPIN/A cooldown; replacing only the JAR does not add it to an existing screen. Keep `persistent-player-data: true` to retain cooldowns across reconnects and restarts.
+
+The startup animation runs once per screen/player connection. Reconnect to replay it. `PACK_SETUP.txt` is installed automatically when missing. Rebuild and distribute the resulting pack after copying artwork or changing layout.
 
 ## Adding an example
 

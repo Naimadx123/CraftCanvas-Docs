@@ -34,7 +34,7 @@ For PowerShell, quote complete property arguments:
 .\gradlew.bat --% integrationTest "-PnexoTestJar=C:/test-libs/nexo-1.29.1.jar" "-PnexoTestLibraries=C:/test-libs/creative-api-1.15.3.jar;C:/test-libs/creative-serializer-minecraft-1.15.3.jar"
 ```
 
-These tests cover typed model/texture import, automatic glyph resources, replacement of previously owned resources and conflict rejection. They do not launch a Minecraft client.
+These tests cover typed model/texture import, automatic glyph resources, replacement of previously owned resources and conflict rejection. They do not launch a Minecraft client. `-PnexoTestPack=<path>` additionally enables the captured-pack composition test; supply a ZIP containing the supported Nexo shader pair under `nexo_1_21_11/`. The test writes through a temporary file after closing the input. Keep the capture at a separate path if you want to retain its original bytes. An unsupported or unrelated ZIP is rejected rather than treated as a valid Nexo fixture. Tests needing Nexo are skipped without the matching test properties; some book serialization/item-hover tests are limited by unimplemented MockBukkit methods and still need a real Paper client/server check.
 
 ## Animation shader checks
 

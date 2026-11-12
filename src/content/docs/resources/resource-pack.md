@@ -2,6 +2,8 @@
 title: "Resource pack"
 ---
 
+The plugin installs `plugins/CraftCanvas/PACK_SETUP.txt` with the setup steps for Nexo, standalone hosting and external senders. Startup logs point to this file and the generated ZIP.
+
 ## Addon bundles
 
 Addons can install namespaced screen YAML, asset manifests and PNG/OGG resources through `CanvasService.installBundle`. CraftCanvas tracks file ownership and checksums, rejects conflicts and leaves existing installations unchanged during normal addon startup. Updates require an explicit administrator workflow; local edits are protected. See [the addon bundle API](/developers/bundles/) for paths, namespaces, limits and results.
@@ -25,11 +27,11 @@ Set `pack.nexo-auto-export: false` to use manual workflows below. This does not 
 1. Run `/cc pack build` or `./gradlew.bat examplePack` for the shipped examples.
 2. Take `plugins/CraftCanvas/.data/generated-pack/craftcanvas.zip` and its `sha1.txt`. The Gradle example task writes them under `build/examples/.data/generated-pack/`. A content-addressed immutable copy also lives under `.data/generated-pack/releases/<sha1>/`.
 3. Host the ZIP at a direct HTTP(S) URL that clients can reach. CraftCanvas does not silently start a web server or upload to a third party.
-4. Set `pack.sender: craftcanvas`, `pack.url` and optionally `pack.sha1`. An empty hash uses the generated pack hash. Choose the desired missing-resource policy.
+4. Set `pack.sender: craftcanvas` and `pack.url` to that direct download URL. Leave `pack.sha1` empty to use the generated hash. If CraftCanvas is the effective sender and the URL is empty, opening reports `PACK_UNAVAILABLE` immediately, even with `pack.missing: wait`.
 5. Reload. The plugin sends one named pack and records statuses. Wait for the expected pack UUID to reach `SUCCESSFULLY_LOADED`; `/cc debug <player>` shows identities and statuses.
 6. Open `home` or `selection` and choose a fitting profile with `/cc profile compact|normal|large`.
 
-The default generated ZIP declares resource-pack formats 75.0 through 97.1, covering Minecraft 1.21.11, 26.1.x, 26.2 and 26.3. Its bitmap/space font providers use the shared format supported by these clients. `.data/generated-pack/manifest.json` records `min-pack-format` and `max-pack-format`. A provider merging this ZIP controls its final pack metadata and must also support the server/client version. By default no core shaders, global default-font overwrite or client mod is included. Enabling `shaders.animations` for [atlas playback](/guides/animations/) or `shaders.hover` for [hover overlays](/guides/shader-hover/) adds the text shader hooks and version overlays while keeping the complete 75.0 through 97.1 pack range. Book-glyph covers native chrome with its validated opaque panel and intercepts mouse clicks. Native keyboard focus remains; see BOOK_GLYPH.md.
+The generated ZIP declares resource-pack formats 75.0 through 97.1, covering Minecraft 1.21.11, 26.1.x, 26.2 and 26.3. Its bitmap/space font providers use the shared format supported by these clients. `.data/generated-pack/manifest.json` records `min-pack-format` and `max-pack-format`. A provider merging this ZIP controls its final pack metadata and must support the target server/client version. The shipped configuration enables hover and animation core shaders; each option can be disabled independently. No client mod or global default-font replacement is required. Native keyboard focus remains; see [renderer limits](/reference/book-renderer/).
 
 `pack.id` is a base UUID in standalone mode; the actual pushed ID incorporates the expected hash, rejecting old load notifications after a new pack is generated. In external mode it must match the responsible sender's actual UUID. A locally selected resource pack has no server download-status acknowledgment. Do not assume an arbitrary successfully loaded pack contains CraftCanvas resources.
 
@@ -65,13 +67,26 @@ The manifest dimensions describe the actual PNG. The component's box defines req
 
 For registered vanilla item/block icons, use [vanilla sprites](/guides/sprites/). Their font definitions reference client textures directly, so no item PNG or local asset manifest is required. The generated font definitions still need to be rebuilt and sent when their layout changes.
 
-Keep `.data/generated-pack/characters.yml`. It records allocation hashes and private-use codepoints. Allocations are stable across layout/resource updates and retained when no longer used, avoiding reassignment to a different image. Invalid, duplicate or exhausted assignments fail generation. Space characters use a separate font, so using the same numeric codepoint in two distinct fonts is not a collision.
+Keep `.data/generated-pack/characters.yml`. It records allocation hashes and private-use codepoints. Successful builds preserve assignments for active glyph IDs and remove obsolete entries, reclaiming space after layout and asset changes. A registry filled by older build history is recovered automatically; routine manual deletion is unnecessary. The range U+E000..U+F8FF holds 6400 active generated glyphs, including image tiles and layout/profile, hover, animation and motion variants. If the active set exceeds that limit, generation reports the required count and keeps the previous pack and registry. Invalid or duplicate saved codepoints still reject generation. Space characters use a separate font, so the same numeric codepoint in two distinct fonts is not a collision.
 
 Click sliders use `slider.track`, `slider.fill` and `slider.thumb` PNG references. The supplied manifest is `assets/sliders.yml`. Keep each PNG fully opaque so generated cells preserve their rectangular font metrics. The compiler generates the widths/heights needed by each allowed profile, including a one-unit advance reservation between cell images. Changing slider dimensions, profiles or graphics requires rebuilding and loading the resource pack.
 
 Text defaults to Minecraft bitmap font definitions and client textures; no custom body atlas or system font is required. Root screen `font` and MiniMessage font tags choose alternatives. Supply custom bitmap font JSON and PNGs under `resource-pack/assets/`; see [screen fonts](/guides/fonts/). Rebuilding prepares the selected resources and positioned font variants. An old `assets/text.png` is ignored and left untouched.
 
 Generation is deterministic for the same definitions, asset bytes and character registry. Immutable release paths prevent a queued export of an older catalog from accidentally reading a newer ZIP. PNG decoding, compilation, pack building, player persistence and export run on the file executor rather than the server thread.
+
+## Transparent console backgrounds
+
+PNG artwork may contain transparent pixels, including around the console chassis. The root `background` must remain an unconditional native PNG, but it no longer needs opaque coverage over Minecraft's book or Done controls.
+
+The shipped configuration hides the underlying book texture:
+
+```yaml
+pack:
+  hide-vanilla-book: true
+```
+
+This writes a transparent 256 x 256 `assets/minecraft/textures/gui/book.png` into the generated pack. It affects other vanilla books using the same loaded pack. Set it to `false`, rebuild and distribute the changed pack to restore the normal texture. The option does not replace shared button/tooltip textures or remove native widgets, their text, keyboard behavior or world dimming. Keep an unconditional close control and check transparent layouts in every allowed profile.
 
 ## Add a sound
 

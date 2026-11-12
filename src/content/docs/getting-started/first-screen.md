@@ -15,8 +15,9 @@ Keep these supplied files available:
 | File | Used for |
 | --- | --- |
 | `screens/frame.yml` | Shared panel layout, visible heading and X |
-| `assets/book.yml`, `assets/book_panel.png`, `assets/close.png` | Frame artwork |
-| `assets/ui.yml`, `assets/button.png`, `assets/selected_frame.png` | Standard buttons and selection artwork |
+| `assets/book.yml`, `assets/book_panel.png`, `assets/close.png`, `assets/console_*.png` | Frame and physical control artwork |
+| `assets/sounds/handheld_startup.ogg` | Sound registered by the shared book manifest |
+| `assets/images.yml`, `assets/button.png`, `assets/selected_frame.png` | Standard buttons and selection artwork |
 
 Default screens are installed only once. If you removed `frame.yml`, restore it from the JAR's `screens/frame.yml` or [project resources](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/frame.yml) before continuing. Reload does not recreate deleted screens.
 
@@ -48,7 +49,7 @@ For a first run, copy the supplied `assets/archer.png` to `assets/travel/map.png
 
 You can create artwork with any PNG editor. Export as PNG, preserve transparency, and use lowercase names without spaces. Other dimensions are allowed, but the manifest in the next step must match the actual source file. The screen's component size controls how large the image appears in the GUI.
 
-The reusable `frame` supplies the panel, so you only need an icon and button image for this example. To replace the entire panel later, follow [background coverage requirements](/reference/book-renderer/#layout-and-native-controls).
+The reusable `frame` supplies the panel, so you only need an icon and button image for this example. To replace the entire panel later, follow [transparent backgrounds and native controls](/reference/book-renderer/#layout-and-native-controls).
 
 ## 3. Register the images in a manifest
 
@@ -101,7 +102,7 @@ title: '<gold>Travel menu'
 | `backend: book-glyph` | Render with a signed book and resource-pack glyphs |
 | `title` | Book metadata; the visible panel heading is a text component |
 
-Use spaces for YAML indentation, not tabs. Map keys such as `components` are followed by indented child fields. Keep component IDs unique within their parent. Quote formatted text and resource IDs as shown in the examples.
+Use spaces for YAML indentation, not tabs. Map keys such as `components` are followed by indented child fields. Keep component IDs unique throughout the screen, including nested children. Quote formatted text and resource IDs as shown in the examples.
 
 Do not open the file yet: the following steps add the visible content. Step 8 contains the complete final file, ready to copy.
 
@@ -125,8 +126,8 @@ Add a root `components` map for visible elements. Here is the image component yo
 components:
   map_icon:
     type: image
-    position: {x: 44, y: 88}
-    size: {width: 48, height: 48}
+    position: {x: 112, y: 88}
+    size: {width: 32, height: 32}
     layer: 20
     asset:
       provider: native
@@ -145,7 +146,7 @@ components:
 | `asset.kind: image` | Use a PNG-backed image |
 | `asset.id` | Exact ID from `assets/travel.yml` |
 
-The PNG is 36 x 36 source pixels but is displayed at 48 x 48 GUI units. These are different measurements. GUI Scale affects the final on-screen size; the server cannot read the player's resolution. The inherited `frame` uses a 512 x 320 reference area and manual profiles.
+The PNG is 36 x 36 source pixels but is displayed at 32 x 32 GUI units. These are different measurements. GUI Scale affects the final on-screen size; the server cannot read the player's resolution. The inherited `frame` uses a 512 x 320 reference area and manual profiles. The complete example keeps application content inside the handheld screen, around x=104..400 and y=80..248, leaving A/B and Home/Exit clear.
 
 When adding more components, put them alongside `map_icon` inside the same `components` map. Do not add a second root `components` key.
 
@@ -168,7 +169,7 @@ The action `{type: set-variable, name: destination, value: market}` changes this
 
 The action list automatically marks the menu for update when it finishes. With the default `resend` update mode, CraftCanvas opens the changed book again. This can flicker; it is not a live HTML-style element update.
 
-The selected frame persists after clicking. Hover tooltips and cursor behavior are handled locally by Minecraft; changing an image on hover is not supported. Transparent areas of a graphic do not create pixel-shaped click holes. See [hitbox limits](/reference/book-renderer/#clicks-and-updates).
+The selected frame persists after clicking. Hover tooltips and cursor behavior are handled locally by Minecraft; the shipped shader configuration adds temporary outlines to eligible controls with text tooltips. See [shader hover](/guides/shader-hover/) to opt out or configure an overlay. Transparent areas of a graphic do not create pixel-shaped click holes. See [hitbox limits](/reference/book-renderer/#clicks-and-updates).
 
 ## 7. Add confirmation and keep the X
 
@@ -196,22 +197,24 @@ components:
     text: '<gold>TRAVEL'
   map_icon:
     type: image
-    position: {x: 44, y: 88}
-    size: {width: 48, height: 48}
+    position: {x: 112, y: 88}
+    size: {width: 32, height: 32}
     layer: 20
     asset: {provider: native, kind: image, id: 'craftcanvas:travel/map'}
   description:
     type: text
-    position: {x: 108, y: 88}
-    size: {width: 336, height: 32}
+    position: {x: 156, y: 88}
+    size: {width: 244, height: 32}
     layer: 20
     text: '<white>Choose your next destination.'
     overflow: wrap
   spawn:
     type: button
-    position: {x: 44, y: 152}
-    size: {width: 190, height: 32}
+    position: {x: 112, y: 136}
+    size: {width: 136, height: 32}
     padding: 8
+    align: center
+    vertical-align: center
     layer: 20
     text: '<white>Spawn'
     asset: {provider: native, kind: image, id: 'craftcanvas:travel/route_button'}
@@ -225,9 +228,11 @@ components:
         - {type: set-variable, name: destination, value: spawn}
   market:
     type: button
-    position: {x: 254, y: 152}
-    size: {width: 190, height: 32}
+    position: {x: 264, y: 136}
+    size: {width: 136, height: 32}
     padding: 8
+    align: center
+    vertical-align: center
     layer: 20
     text: '<white>Market'
     asset: {provider: native, kind: image, id: 'craftcanvas:travel/route_button'}
@@ -241,17 +246,20 @@ components:
         - {type: set-variable, name: destination, value: market}
   selection:
     type: text
-    position: {x: 44, y: 204}
-    size: {width: 400, height: 20}
+    position: {x: 112, y: 180}
+    size: {width: 288, height: 20}
     layer: 20
     text: '<gold>Destination: <white>{destination}'
   confirm:
     type: button
-    position: {x: 44, y: 244}
-    size: {width: 400, height: 32}
+    position: {x: 112, y: 216}
+    size: {width: 288, height: 28}
     padding: 8
+    align: center
+    vertical-align: center
     layer: 20
     text: '<gold>Confirm destination'
+    tooltip: ['<gray>Confirm the selected destination.']
     asset: {provider: native, kind: image, id: 'craftcanvas:travel/route_button'}
     actions:
       click:

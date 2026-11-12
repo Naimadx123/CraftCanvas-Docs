@@ -4,7 +4,7 @@ title: "Build a screen from components"
 
 For a 5 by 5 crafting board displaying the player's actual inventory, with click transfers and recipes, see [inventory workbenches](/guides/crafting/).
 
-Each example below is a fragment for a screen extending `frame`. Add component maps under `components` and variables under the screen's root `variables`. Keep the inherited background and X. Full field types and ranges are in the [YAML reference](/reference/yaml/).
+Each example below is a fragment for a screen extending `frame`. Add component maps under `components` and variables under the screen's root `variables`. Keep the inherited background and unconditional close control. The current frame is a 512 x 320 handheld; put application content inside its screen, approximately x=104..400 and y=80..248, leaving the physical console controls clear. Full field types and ranges are in the [YAML reference](/reference/yaml/).
 
 ## Text, images and tooltips
 
@@ -12,14 +12,14 @@ Each example below is a fragment for a screen extending `frame`. Add component m
 components:
   description:
     type: text
-    position: {x: 44, y: 90}
-    size: {width: 400, height: 32}
+    position: {x: 112, y: 88}
+    size: {width: 288, height: 32}
     layer: 20
     text: '<gold>Travel guide<newline><white>Choose your next destination.'
     overflow: wrap
   map_icon:
     type: image
-    position: {x: 44, y: 140}
+    position: {x: 112, y: 140}
     size: {width: 48, height: 48}
     layer: 20
     asset: {provider: native, kind: image, id: 'craftcanvas:archer'}
@@ -36,9 +36,11 @@ variables:
 components:
   market:
     type: button
-    position: {x: 44, y: 140}
+    position: {x: 112, y: 140}
     size: {width: 240, height: 32}
     padding: 8
+    align: center
+    vertical-align: center
     layer: 20
     text: '<white>Market'
     asset: {provider: native, kind: image, id: 'craftcanvas:button'}
@@ -64,18 +66,18 @@ The overlay persists after selection. Tooltips and cursor changes are native loc
 components:
   routes:
     type: grid
-    position: {x: 44, y: 90}
-    size: {width: 424, height: 100}
+    position: {x: 112, y: 88}
+    size: {width: 288, height: 100}
     layer: 20
     layout: {mode: grid, columns: 2, gap: 8}
     children:
       north:
         type: text
-        size: {width: 200, height: 24}
+        size: {width: 136, height: 24}
         text: '<white>North route'
       south:
         type: text
-        size: {width: 200, height: 24}
+        size: {width: 136, height: 24}
         text: '<white>South route'
 ```
 
@@ -89,19 +91,52 @@ variables:
 components:
   meter:
     type: progress
-    position: {x: 44, y: 100}
-    size: {width: 360, height: 24}
+    position: {x: 112, y: 100}
+    size: {width: 288, height: 24}
     layer: 20
     text: '<white>Progress: '
     data: {value: '{progress}', max: 100, segments: 20, filled: '|', empty: '|'}
   divider:
     type: separator
-    position: {x: 44, y: 140}
-    size: {width: 360, height: 16}
+    position: {x: 112, y: 140}
+    size: {width: 288, height: 16}
     layer: 20
 ```
 
 `stat` uses the same segmented bar data. Values clamp to the displayed range; changing a variable redraws it through the normal update mode. A separator with no text draws hyphens. These are text/glyph compositions with discrete segments.
+
+## Button cooldowns
+
+Add `cooldown` to a button or input control to limit how often each player can activate it:
+
+```yaml
+components:
+  claim:
+    type: button
+    position: {x: 112, y: 196}
+    size: {width: 288, height: 28}
+    padding: 6
+    align: center
+    vertical-align: center
+    layer: 20
+    text: '<gold>Claim reward'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    tooltip: ['<gray>One claim every 60 seconds.']
+    cooldown:
+      seconds: 60
+      key: claim_reward
+      message: '<yellow>Try again in {remaining}s.'
+    actions:
+      click: [{type: message, text: '<green>Reward claimed.'}]
+```
+
+This fragment only sends a confirmation message; connect your own reward action or callback when ready. `seconds` accepts an integer from 1 to 2592000. The optional `key` shares one deadline between controls, including controls on different screens. Without a key, the screen and component IDs identify the cooldown. The bundled reward wheel uses `key: reward_wheel` for both SPIN and the physical A button.
+
+The server starts the cooldown when it accepts the click, before running the action list. A later action failure or cancelled confirmation does not refund it. On a blocked click, `{remaining}` is the time left in whole seconds, rounded up. Set `message: ''` to suppress the feedback. Deadline checks do not require periodic book refresh.
+
+Closing, reopening or reloading a screen keeps the deadline. With `persistent-player-data: true`, cooldowns are also stored in player SQL data and survive reconnects and restarts. With persistence disabled, reconnecting can reset them. Keep shared keys stable across upgrades. For paid rewards or exact-once transactions, use an addon-owned transaction ledger as well.
+
+`cooldown-ticks` remains a separate short click debounce, defaulting to four ticks per component/session. Local-page navigation does not send a server click and cannot use either configured cooldown. The unconditional close control cannot use the player cooldown.
 
 ## Tabs, pages and carousels
 

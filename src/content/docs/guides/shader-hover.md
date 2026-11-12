@@ -2,7 +2,7 @@
 title: "Experimental shader hover"
 ---
 
-Shader hover adds a temporary PNG overlay to a button while the client's native text hover is active. It is an optional extension of `book-glyph`, disabled by default. The shader variants target **Paper/Folia 1.21.11 through 26.3 with matching vanilla clients**, including 26.1, 26.1.1 and 26.1.2. ViaVersion and modified rendering clients are not covered.
+Shader hover adds a temporary PNG overlay to a button while the client's native text hover is active. It is an optional extension of `book-glyph`; the shipped configuration enables it alongside animation shaders. The shader variants target **Paper/Folia 1.21.11 through 26.3 with matching vanilla clients**, including 26.1, 26.1.1 and 26.1.2. ViaVersion and modified rendering clients are not covered.
 
 ## Enable and try the example
 
@@ -14,12 +14,27 @@ Shader hover adds a temporary PNG overlay to a button while the client's native 
      animations: false
    ```
 
-2. Copy [the complete example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/shader_hover.yml) to `plugins/CraftCanvas/screens/shader_hover.yml`. Keep the bundled `frame` screen and the standard `button`, `selected_frame`, `close` and `book_panel` PNGs/manifests. The example is deliberately outside the default screens so normal installations do not require shaders.
+2. Copy [the complete example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/shader_hover.yml) to `plugins/CraftCanvas/screens/shader_hover.yml`. Keep the bundled `frame` screen and the standard `button`, `selected_frame`, `close` and `book_panel` PNGs/manifests. This extra example is outside the default screens. The bundled handheld examples already use automatic hover outlines on eligible application controls; physical A/B and Home/Exit controls explicitly opt out.
 3. Run `/cc reload`. A successful reload compiles the screen and builds a new pack. Unsupported server versions reject the setting. `/cc debug capabilities` shows whether the mode is enabled.
 4. Load the newly generated pack. With automatic Nexo export, CraftCanvas replaces its managed ZIP and requests a Nexo rebuild; wait for Nexo's merged pack to load. With standalone hosting, replace the hosted ZIP and send the new version through your configured sender.
 5. Run `/cc open shader_hover`. Move over FIRST and SECOND, click to change the persistent selection, and compare with LOCKED. The disabled button has its ordinary tooltip but no hover overlay or server action. The inherited X closes the screen.
 
 Turning the option on or off changes pack contents. It is not an immediate per-player shader switch. To disable hover overlays, remove `hover-overlay` fields or remove screens using them, set `shaders.hover: false`, reload and distribute the updated pack. The shared shader remains if `shaders.animations` is enabled. A failed reload preserves the previous active configuration.
+
+## Automatic hover in the handheld examples
+
+The shipped configuration contains:
+
+```yaml
+shaders:
+  hover: true
+  animations: true
+  default-hover-overlay: craftcanvas:selected_frame
+```
+
+Automatic assignment applies to supported actionable buttons and input controls with a nonempty text tooltip, no item tooltip and no explicit overlay. The generated outline draws only its border, keeping the button label clear. Set `hover-overlay: false` on a component to opt out, as the physical handheld controls do. An empty `shaders.default-hover-overlay: ''` disables automatic assignment globally while retaining explicitly configured overlays.
+
+Use `align: center` and `vertical-align: center` to center labels within padded buttons. Keep adjacent controls separate and use transparent centers in explicit overlay artwork; an explicit overlay draws the configured PNG rather than applying the automatic outline rule.
 
 ## Add an overlay to a button
 
@@ -48,7 +63,7 @@ components:
 
 ## How it works
 
-The existing button graphics retain their original font metrics, click area and authorized session tickets. Their native `show_text` tooltip contains small marker glyphs with zero net advance, followed by the ordinary configured tooltip text. Core shader code recognizes marker pixels in the glyph atlas and relocates their PNG payload to a position compiled from the screen layout. The target uses the same native book origin, manual profile and unscaled offsets as the normal renderer. Larger overlays are tiled into at most 120 by 120 payloads in 128 by 128 marker textures.
+The existing button graphics retain their original font metrics, click area and authorized session tickets. Their native `show_text` tooltip contains small marker glyphs with zero net advance, followed by the ordinary configured tooltip text. Core shader code recognizes marker pixels in the glyph atlas and relocates their PNG payload to a position compiled from the screen layout. The target uses the same native book origin, manual profile and `layout.scale-offset-y` behavior as the normal renderer. Larger overlays are tiled into at most 120 by 120 payloads in 128 by 128 marker textures.
 
 The normal text tooltip remains beside the cursor, including its native frame. Its text uses a namespaced font referencing the vanilla 1.21.11 bitmap and Unicode providers, with matching bundled advance metrics. Shader hover tooltips wrap at 180 GUI units before reaching the client; colors, bold, Unicode and line breaks are retained. This font is independent of the client's Force Unicode Font option and does not replace fonts used by other tooltips.
 
@@ -58,7 +73,7 @@ Hover does not create a server event or modify a session variable. Selected grap
 
 ## Pack scope and limitations
 
-The standalone pack supplies `rendertype_text.vsh` for 1.21.11 and overlays for 26.1.x (format 84), 26.2 (88) and 26.3 (97). The newer 26.2/26.3 pipelines use `text.vsh`. Namespaced includes share the hover, animation and cinematic algorithms; 26.3 uses explicit stage locations, `#include` and `gl_VertexIndex`. [Atlas image animation](/guides/animations/) is controlled independently by `shaders.animations`. The pack leaves vanilla tooltip sprites, book textures and default fonts alone. Unmarked glyphs follow the stock shader path. It declares formats 75.0 through 97.1 with either shader option enabled. Merging providers must preserve the overlay metadata and files.
+The standalone pack supplies `rendertype_text.vsh` for 1.21.11 and overlays for 26.1.x (format 84), 26.2 (88) and 26.3 (97). The newer 26.2/26.3 pipelines use `text.vsh`. Namespaced includes share the hover, animation and cinematic algorithms; 26.3 uses explicit stage locations, `#include` and `gl_VertexIndex`. [Atlas image animation](/guides/animations/) is controlled independently by `shaders.animations`. Hover leaves vanilla tooltip sprites and default fonts alone. The independent `pack.hide-vanilla-book` option controls replacement of the book PNG. Unmarked glyphs follow the stock shader path. It declares formats 75.0 through 97.1 with either shader option enabled. Merging providers must preserve the overlay metadata and files.
 
 Core shader files are global pack resources. During `NexoPostPackGenerateEvent`, CraftCanvas checks the effective text shader, including active overlays for formats 75, 84, 88 and 97. For the verified Nexo 1.29.1 GIF shader templates for each release family, it preserves `applyGifEffect()` and adds the hover and atlas hooks in memory before serialization/obfuscation. No Nexo source files are changed. `/cc debug capabilities` reports integration status. Unknown vertex or fragment shaders reject composition. Shader-free book animation does not require this adapter.
 
@@ -88,4 +103,4 @@ The optional API integration tests can use an administrator-supplied Nexo JAR wi
 gradlew.bat integrationTest --tests "*NexoShaderApiTest" -PnexoTestJar=/path/to/nexo-1.29.1.jar
 ```
 
-An additional `-PnexoTestPack=/path/to/merged.zip` enables the captured-pack test, which writes a composed copy under `build/shader-hover-example/` for the GPU check. It leaves the supplied JAR and ZIP unchanged. These tests are skipped when no Nexo JAR is supplied.
+An additional `-PnexoTestPack=/path/to/merged.zip` enables the captured-pack test, which writes a composed copy under `build/shader-hover-example/` for the GPU check. It leaves the supplied JAR unchanged and writes the ZIP through a temporary file after closing the input archive. Use a separate source ZIP to retain an unchanged capture; choosing the output path as input safely replaces it with the composed result. These tests are skipped when no Nexo JAR is supplied.

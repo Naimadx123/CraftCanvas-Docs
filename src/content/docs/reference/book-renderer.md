@@ -4,17 +4,17 @@ title: "Book renderer and limitations"
 
 Every configured CraftCanvas menu uses `book-glyph` on Paper 1.21.11 through 26.3 with a matching vanilla client. `auto` selects this same renderer and rejects unsupported requirements. There is no inventory backend. An optional [experimental core-shader extension](/guides/shader-hover/) adds hover overlays on supported 1.21.11 through 26.3 clients; the default book renderer requires no shader changes. Text input can temporarily open a native Paper dialog as an auxiliary editor; it is not a menu backend.
 
-Noninteractive [cinematic screens](/guides/animations/#fullscreen-cinematics) use a separate title HUD overlay with core shaders on 1.21.11. They do not open the book renderer described below.
+Noninteractive [cinematic screens](/guides/animations/#fullscreen-cinematics) use a separate title HUD overlay with core shaders on supported vanilla clients from 1.21.11 through 26.3. They do not open the book renderer described below.
 
 ## Layout and native controls
 
 The renderer creates a detached `WRITTEN_BOOK` with Adventure pages through `BookMeta` and opens it through public `Player.openBook(ItemStack)` without changing the player's inventory. PNGs become tiled bitmap-font glyphs. Per-position ascent sets vertical placement; positive/negative space glyphs and bidirectional text isolate each element's advance while keeping the logical book line within its 114-unit wrapping budget. Text defaults to Minecraft bitmap glyphs with their native advances; the screen font and MiniMessage font tags select prepared font variants. The panel may extend beyond the old text-page bounds.
 
-The origin is the native book text origin. `layout.anchor: horizontal-center` centers horizontally using that origin; `book-origin` keeps it fixed. `layout.offset-y` is an unscaled fixed offset. The server does not know client resolution or GUI Scale, so vertical centering and automatic profile selection are unavailable. Choose `compact`, `normal` or `large` manually. Confirm each profile on the clients you support.
+The origin is the native book text origin. `layout.anchor: horizontal-center` centers horizontally using that origin; `book-origin` keeps it fixed. By default, `layout.offset-y` is fixed. With `layout.scale-offset-y: true`, it scales relative to the native book top at y=-30; the shipped handheld frame uses this with `offset-y: -48`. The server cannot read client resolution or GUI Scale, so vertical centering and automatic profile selection are unavailable. Choose `compact`, `normal` or `large` manually and check each supported profile.
 
-Every screen requires an unconditional root `background` with a native PNG and a root close control whose only unconditional click action is `close`. The compiler checks all allowed profiles and requires fully opaque pixels over book bounds `(-36,-30,192,192)` and Done bounds `(-40,164,200,20)` relative to the book origin. The background draws over native texture, page number, arrows and Done. Its native no-op `change_page` click consumes mouse activation before the client's widget handler; foreground elements supply their own actions. This covers controls and intercepts their mouse actions; it does not remove the native widgets.
+Every screen requires an unconditional root `background` with a native PNG and a root close control whose only unconditional click action is `close`. The compiler checks glyph metrics, component bounds and allowed profiles. Transparent backgrounds are allowed, and native-control coverage is not required. The background has a rectangular native no-op `change_page` click area; transparent pixels within that rectangle still intercept clicks. Foreground elements supply their own actions.
 
-Keyboard focus still belongs to Minecraft. Tab/Enter can activate native Done and Escape closes locally. A resource pack cannot remove widget hitboxes or keyboard behavior. No global vanilla button/book texture is overridden. The world stays visible outside the panel with native dimming. The book screen avoids the blurred-background render path; removing dimming is unsupported.
+Keyboard focus still belongs to Minecraft. Tab/Enter can activate native Done and Escape closes locally. `pack.hide-vanilla-book: true` replaces the shared vanilla book PNG with a transparent texture; it is enabled in the shipped configuration. It does not remove widget hitboxes, page/control text or keyboard behavior. Shared button and tooltip textures are unchanged. The world remains visible outside the panel with native dimming. The book screen avoids the blurred-background render path; removing dimming is unsupported.
 
 ## Clicks and updates
 
@@ -42,20 +42,20 @@ A slider is a row of separately clickable PNG glyph cells, with a label, fill an
 
 Supported appearance states are normal, selected, disabled, locked and loading. Tooltip text or item preview uses native hover behavior. Selected appearance persists in session state and is rendered after a click. Disabled elements have no server-action ticket.
 
-Hover-image, hover-sound, on-hover, pressed states, drag, scroll, right/shift/double-click and raw keyboard input are unsupported and rejected. Vanilla text does not send hover-enter/leave or cursor coordinates to the server. Frame playback uses repeated book opens unless `shaders.animations` enables atlas playback. The optional `hover-overlay` field requires the explicitly enabled experimental shader extension and a text tooltip; it does not expose server hover events. External glyphs must be one character with explicit fixed font metrics and matching geometry; native PNGs support generated positioning and scaling.
+Hover-image, hover-sound, on-hover, pressed states, drag, scroll, right/shift/double-click and raw keyboard input are unsupported and rejected. Vanilla text does not send hover-enter/leave or cursor coordinates to the server. Frame playback uses repeated book opens unless `shaders.animations` enables atlas playback. The optional `hover-overlay` field requires `shaders.hover: true` (enabled in the shipped configuration) and a text tooltip; it does not expose server hover events. External glyphs must be one character with explicit fixed font metrics and matching geometry; native PNGs support generated positioning and scaling.
 
 Book body text accepts colors, bold and MiniMessage font tags with measured metrics. Screen `font` defaults to `minecraft:default`. See [screen fonts](/guides/fonts/) for bitmap resources, glyph coverage, supported providers and line-spacing limits. Pages are limited to 32767 serialized component characters; reduce elements, repeated tooltips or variants if that budget is exceeded.
 
 ## Troubleshooting
 
 - Missing graphics: check the expected UUID/hash and `SUCCESSFULLY_LOADED` with `/cc debug <player>`, then rebuild/host the current pack.
-- Pack compilation failure: read the file/screen/component/field in the error; check PNG dimensions, opacity, ascent and character registry.
-- Visible book controls: check every allowed profile's background coverage, layers and pack version.
+- Pack compilation failure: read the file/screen/component/field in the error; check PNG dimensions, glyph ascent and character registry. Opaque pixels are required for slider-cell assets, not for the root background.
+- Visible book texture: check `pack.hide-vanilla-book`, rebuild and load the current pack. Native control text and keyboard behavior remain; arrange your panel and layers accordingly.
 - Unexpected clickable area: use PNG-backed controls, account for transparency and advance, and reject accidental overlaps.
 - Panel too large: select a smaller manual profile; GUI Scale cannot be read by the server.
 - Lost local choice: local pages are client-only until custom confirmation; use resend for immediate server state.
 - Book reopens: remove external code that calls refresh after Escape; automatic YAML polling is prohibited.
 
-After changing artwork or layout, check the final merged pack in a matching vanilla client. Test your allowed profiles and GUI Scale settings, including clicks near transparent edges, native-control coverage and redraw behavior.
+After changing artwork or layout, check the final merged pack in a matching vanilla client. Test your allowed profiles and GUI Scale settings, including clicks near transparent edges, native controls and redraw behavior.
 
 Scrollable row viewports, dialog/chat search, finite component movement/box scaling and in-GUI notifications are available without core shaders. See [interactive UI](/guides/interactive-ui/) for the complete example, fields and the finite resend/Escape limitations.

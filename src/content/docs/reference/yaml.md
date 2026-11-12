@@ -16,10 +16,10 @@ All geometry uses integer GUI units, not desktop pixels. The client applies GUI 
 
 A screen is defined entirely by its YAML ID, geometry, components, variables, conditions and actions. Screen state is defined by your own variables and callbacks. Artwork and themes are configurable resources.
 
-- `home`: navigation between examples, with a configurable greeting.
+- `home`: two-page handheld app launcher, configurable greeting, and a startup animation/sound on the first successful opening per connection.
 - `selection`: generic option selection, selected appearance, confirmation and back navigation.
 - `settings`: persistent player settings and supported input controls.
-- `reward_wheel`: finite 48-frame animation and a server-selected reward and finite frame playback.
+- `reward_wheel`: 48-frame animation, six server-selected rewards, and a shared 60-second player cooldown for SPIN and the console A button.
 - `sprites`: scalable client item textures, inline sprite tags and native tooltips.
 - `crafting`: 5 by 5 crafting board, all 36 inventory slots, held stacks and shaped recipes; see [inventory workbenches](/guides/crafting/).
 - `catalog`: pagination, permissions and item tooltips.
@@ -30,6 +30,8 @@ The `navigation_button` template takes `screen`, `label`, `x` and `y`. The `sele
 
 ## Main configuration
 
+The Default column describes parser fallbacks when a field is omitted. The shipped `config.yml` enables `shaders.hover`, `shaders.animations` and `pack.hide-vanilla-book`, and selects `pack.missing: wait`. Existing configuration values are preserved when missing defaults are synchronized.
+
 | Field | Type | Default | Range or behavior |
 | --- | --- | --- | --- |
 | schema-version | integer | 1 | 1; schema 0 migrates in memory |
@@ -37,11 +39,13 @@ The `navigation_button` template takes `screen`, `label`, `x` and `y`. The `sele
 | persistent-player-data | boolean | true | Enables player variables marked persistent |
 | item-icons | ordered map | empty | Optional overrides for item slot icons; Nexo model previews are automatic without rules; see [automatic item models](/guides/item-icons/) |
 | shaders.hover | boolean | false | Enable hover overlays; Paper/Folia with matching vanilla clients 1.21.11 through 26.3; rebuild and load the pack after changes |
+| shaders.default-hover-overlay | native image ID or empty string | craftcanvas:selected_frame when registered | Automatic outline for eligible text-tooltip controls; empty disables automatic assignment; see [shader hover](/guides/shader-hover/) |
 | shaders.animations | boolean | false | Client image atlases and smooth native PNG/text component motion; false uses discrete book updates. Requires a matching vanilla 1.21.11 through 26.3 client; independent of shaders.hover |
 | limits.components | integer | 256 | 1..1024 per screen |
 | limits.tasks-per-session | integer | 16 | 1..128 delayed jobs |
 | limits.updates-per-tick | integer | 10 | 1..100 whole-screen renders |
 | profiles | number map | compact: .75, normal: 1, large: 1.25 | Finite scales .5..1.5; supplied map replaces defaults |
+| pack.hide-vanilla-book | boolean | false | Replace the shared vanilla book.png with a transparent 256 x 256 texture; shipped file selects true; native controls and dimming remain |
 | pack.sender | enum | external | craftcanvas or external; fallback routing when automatic Nexo handling is inactive |
 | pack.nexo-auto-export | boolean | true | Enabled Nexo receives an owned ZIP, rebuilds the merged pack and becomes the sole sender |
 | pack.id | UUID string | 5d7a408e-fd36-4f13-a1bb-c9acde1b42c8 | Base UUID for standalone, actual sender UUID for external |
@@ -49,7 +53,7 @@ The `navigation_button` template takes `screen`, `label`, `x` and `y`. The `sele
 | pack.sha1 | string | empty | Generated hash when empty, otherwise 40 hexadecimal characters |
 | pack.missing | enum | deny | deny or wait; shipped file selects wait |
 
-Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nexo handling, UUID/hash come from its verified generated/uploaded pack through the public API; the configured standalone URL/hash and external UUID are not used. Set `pack.nexo-auto-export: false` for manual routing. `wait` queues an opening until loading or cancellation. Pack-free screen fallbacks are rejected because every menu needs glyph resources. Asset-level fallbacks remain supported.
+Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nexo handling, UUID/hash come from its verified generated/uploaded pack through the public API; the configured standalone URL/hash and external UUID are not used. Set `pack.nexo-auto-export: false` for manual routing. `wait` queues an opening until loading or cancellation. When the effective sender is `craftcanvas` and `pack.url` is empty, opening fails immediately with `PACK_UNAVAILABLE` instead of queuing. Startup logs and administrator command replies point to the installed `PACK_SETUP.txt`. Pack-free screen fallbacks are rejected because every menu needs glyph resources. Asset-level fallbacks remain supported.
 
 ## Screen fields
 
@@ -72,6 +76,7 @@ Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nex
 | session.timeout-ticks | integer | 12000 | 20..72000 activity timeout |
 | variables | declaration map | empty | Typed initial values |
 | components | component map | empty | Stable component IDs |
+| first-open | optional map | absent | One intro per screen/player connection after the first successful render; see [startup animation](/guides/animations/#first-open-startup-animation) |
 | workbench | optional map | absent | Player-inventory reservations, board dimensions and recipes; see [inventory workbenches](/guides/crafting/) |
 | book.update | enum | resend | resend or local-pages |
 | book.variants | map of variable maps | empty | 1..12 variants for local-pages; forbidden with resend |
@@ -95,9 +100,10 @@ Schema 1 uses `backend` and `components`, structured resource references, and de
 | overlap | enum | allow | allow or reject-interactive |
 | anchor | enum | horizontal-center | horizontal-center or book-origin |
 | offset-x | integer | 0 | -1024..1024, unscaled book-origin offset |
-| offset-y | integer | -30 | -768..768, unscaled fixed vertical offset |
+| offset-y | integer | -30 | -768..768; fixed unless scale-offset-y is true |
+| scale-offset-y | boolean | false | Scale the vertical offset relative to the native book top (-30); the shipped frame uses true with offset-y: -48 |
 
-The default geometry alone does not cover native book controls; inherit `frame` or provide a valid background and X. All allowed profiles are checked for native coverage, legal bitmap ascent and component bounds. Nested component layouts support only mode, columns and gap. A list forces column children and a grid forces grid children. Row/column/grid placement uses declared sizes. Groups do not clip their children and provide no scroll viewport. No percentages, flex layout, clipping masks or automatic client fit are implied.
+Inherit `frame` or provide an unconditional native background and close control. Backgrounds may be transparent and need not cover native book controls. All allowed profiles are checked for legal bitmap ascent and component bounds. Nested component layouts support only mode, columns and gap. A list forces column children and a grid forces grid children. Row/column/grid placement uses declared sizes. Groups do not clip their children and provide no scroll viewport. No percentages, flex layout, clipping masks or automatic client fit are implied.
 
 ## Variables and text
 
@@ -136,7 +142,7 @@ Map keys are stable IDs starting with a letter, unique throughout the screen inc
 | tooltip-item | item reference | absent | Native item tooltip; mutually exclusive with text tooltip |
 | tooltip-item-slot | string | absent | Session item tooltip supplied through the API; text tooltip is the fallback while empty; mutually exclusive with tooltip-item |
 | asset | resource reference | absent | Native PNG, registered vanilla sprite or explicit external single glyph; see [sprites](/guides/sprites/) |
-| hover-overlay | resource reference | absent | Experimental native PNG overlay on an actionable button; requires shaders.hover and a nonempty text tooltip; no item tooltip or fallback; see [shader hover](/guides/shader-hover/) |
+| hover-overlay | native resource reference or false | automatic when eligible | Explicit PNG overlay requires shaders.hover and a nonempty text tooltip; false opts this component out of automatic hover; item tooltips and resource fallbacks are unsupported |
 | hover-overlay-border | integer | 4 | Source PNG border in pixels, 0..64; nine-slice scaling keeps all four edges at this thickness multiplied by the manual profile; 0 stretches the entire overlay; requires hover-overlay |
 | asset-select | selector map | absent | Choose a previously compiled graphic through a declared string variable; mutually exclusive with asset and states.normal.asset |
 | autoplay | animation map | absent | Passive image loop: frames (2..128 native PNG references), interval-ticks (2..40, default 2); requires shaders.animations and session.timeout-ticks <= 12000 |
@@ -149,16 +155,21 @@ Map keys are stable IDs starting with a letter, unique throughout the screen inc
 | children | component map | empty | Nested components |
 | layout | nested layout | manual, 2 columns, gap 4 | Child composition |
 | data | type-specific map | empty | Fields below; unknown entries fail |
-| cooldown-ticks | integer | 4 | 0..1200 per component/session |
+| cooldown-ticks | integer | 4 | 0..1200 tick click debounce per component/session |
+| cooldown | map | absent | Player cooldown in real seconds, optionally shared by key; see [button cooldowns](/guides/components/#button-cooldowns) |
+| cooldown.seconds | integer | 60 | 1..2592000 (30 days) when cooldown is declared |
+| cooldown.key | string | screen ID + component ID | Optional shared key: 1..128 letters, digits, underscores, dots, colons or hyphens |
+| cooldown.message | formatted string | Try again in {remaining}s. | Blocked-click feedback; {remaining} rounds seconds up; empty string suppresses the message |
 | click-sound / denied-sound | namespaced sound key | absent | Click-time sound or denial |
 | align | enum | left | left, center, right |
+| vertical-align | enum | top | top, center, bottom within the padded text area |
 | overflow | enum | truncate | wrap, clip, truncate using whole-character metrics |
 | shadow | boolean | false | Native glyph/text shadow |
 | color | hex string | absent | Base text color/bitmap tint |
 | font | string | absent | Unsupported for book body text; use asset.font for external glyphs |
 | refresh-interval-ticks | integer | 0 | Must remain zero |
 
-Anchors refer to the parent box; x/y, offsets and margin apply before anchor transformation. Right/bottom insets move inward; center adds half remaining space. Profiles round geometry after scaling. Text clipping is whole-character layout truncation, not a shader mask. A text-only button has text hitboxes; use an asset for a rectangular button. All elements must draw at or after the native-covering background.
+Anchors refer to the parent box; x/y, offsets and margin apply before anchor transformation. Right/bottom insets move inward; center adds half remaining space. Profiles round geometry after scaling. Text clipping is whole-character layout truncation, not a shader mask. A text-only button has text hitboxes; use an asset for a rectangular button. All elements must draw at or after the background. Use `align: center` and `vertical-align: center` to center a label inside its padded button area.
 
 ### Selecting a compiled graphic
 
@@ -183,7 +194,7 @@ components:
     tooltip: ['<gray>No reward item supplied.']
 ```
 
-This is a component fragment; retain the screen's background and close control. Change `preview_icon` with set-variable or the public API and use the normal book update mechanism. An unmapped value uses the explicit fallback; without one, rendering fails with the screen, component, variable and value. No placeholder substitution occurs in resource IDs, and an unknown ID cannot request a new bitmap or bypass a provider permission. State-specific selected/disabled/locked/loading assets take priority over the selector; overlays still apply. The opaque root background must remain static. External glyph choices retain their exact font, permissions and fixed metrics and may require a single layout profile. Item models cannot be selector options.
+This is a component fragment; retain the screen's background and close control. Change `preview_icon` with set-variable or the public API and use the normal book update mechanism. An unmapped value uses the explicit fallback; without one, rendering fails with the screen, component, variable and value. No placeholder substitution occurs in resource IDs, and an unknown ID cannot request a new bitmap or bypass a provider permission. State-specific selected/disabled/locked/loading assets take priority over the selector; overlays still apply. The root background must remain static; transparent pixels are allowed. External glyph choices retain their exact font, permissions and fixed metrics and may require a single layout profile. Item models cannot be selector options.
 
 `tooltip-item-slot` names an API-populated slot, starting with a letter and containing letters, digits, underscore, period, colon or hyphen, at most 128 characters. Components can share a slot within a screen. Empty slots use the current text tooltip, including state overrides. A populated slot uses the native item tooltip instead of text. Slots are session-local, are cleared when the session ends and are not persisted or copied into navigation history. See [the presentation API](/developers/sessions/#dynamic-graphics-and-session-item-tooltips). The bundled `selection` example demonstrates an asset selector and the `selection_preview` tooltip slot.
 

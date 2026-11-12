@@ -25,7 +25,7 @@ Storage settings take effect after a server restart. `/cc reload` synchronizes m
 
 ## Loading and saving
 
-Only variables with `scope: player` and `persistent: true` are saved, when `persistent-player-data` is enabled in `config.yml`. Session and global variables and display profiles are not persisted.
+Variables with `scope: player` and `persistent: true` are saved when `persistent-player-data` is enabled in `config.yml`. Active button-cooldown deadlines are also included in that player snapshot under internal keys; they do not need variable declarations. This lets cooldowns survive reconnects and restarts. Session and global variables and display profiles are not persisted.
 
 Startup loads players already online; subsequent players load during asynchronous pre-login. The cache is removed on disconnect after sessions save their state. A failed login-time read rejects login rather than replacing existing data with defaults. SQL initialization, reads and writes use the file executor, outside the player's owning thread.
 
