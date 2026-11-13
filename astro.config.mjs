@@ -62,6 +62,7 @@ export default defineConfig({
             { label: 'Quick start', slug: 'developers/quick-start' },
             { label: 'API reference', slug: 'developers/api' },
             { label: 'Code-defined screens', slug: 'developers/code-screens' },
+            { label: 'Typed definition builders', slug: 'developers/definition-builders' },
             { label: 'Component state and edits', slug: 'developers/component-state' },
             { label: 'Sessions and presentation', slug: 'developers/sessions' },
             { label: 'GUI controls', slug: 'developers/gui' },

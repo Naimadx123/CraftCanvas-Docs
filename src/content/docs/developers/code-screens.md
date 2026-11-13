@@ -15,16 +15,12 @@ val definition = CanvasScreenDefinition.builder("example:code-menu")
     .extendsScreen("frame")
     .title("Addon menu")
     .variable("claimed", CanvasVariableType.BOOLEAN, false)
-    .component("claim", mapOf(
-        "type" to "button",
-        "position" to mapOf("x" to 112, "y" to 128),
-        "size" to mapOf("width" to 160, "height" to 28),
-        "layer" to 20, "align" to "center", "vertical-align" to "center",
-        "text" to "Claim",
-        "asset" to mapOf("provider" to "native", "kind" to "image", "id" to "craftcanvas:button"),
-        "tooltip" to listOf("Claim your reward"),
-        "actions" to mapOf("click" to listOf(mapOf("type" to "message", "text" to "Claimed!")))
-    ))
+    .component(CanvasComponentDefinition.button("claim")
+        .position(112, 128).size(160, 28).layer(20).centered()
+        .text("Claim").tooltip("Claim your reward")
+        .asset(CanvasAssets.nativeImage("craftcanvas:button"))
+        .enabledWhen(CanvasConditions.variableEquals("claimed", false))
+        .onClick(CanvasActions.setVariable("claimed", true), CanvasActions.message("Claimed!")))
     .build()
 val registration = canvas.registerScreen(owner, definition)
 canvas.reload().thenAccept { result ->
@@ -46,8 +42,9 @@ The builder provides these helpers:
 | --- | --- |
 | `field(name, value)` | Any schema field, including `layout`, `book`, `first-open`, `session`, `theme`, `font` or `cinematic` |
 | `extendsScreen(id)` / `title(text)` | Root inheritance and window title |
+| `component(definition)` / `component(builder)` | Typed [component builder](/developers/definition-builders/) with actions, conditions, assets and states |
 | `component(id, fields)` | Add or replace a component declaration; nested children use ordinary schema maps |
-| `variable(name, type, default[, scope, persistent])` | Typed variable declaration |
+| `variable(name, type, default[, scope, persistent])` | Typed variable declaration; validates name/default type and persistence scope immediately |
 | `image(id, path, width, height)` | Native PNG resource; dimensions must match the file and be within 1..2048 |
 | `sound(id, path)` | Native OGG resource |
 | `build()` / `definition.toBuilder()` | Create a detached definition or edit a copy |
@@ -56,7 +53,7 @@ Native resources need a `craftcanvas:` ID, for example `craftcanvas:myaddon/pane
 
 Inheritance is optional. A complete `book-glyph` definition can supply its own `layout`, unconditional root native `background` image and unconditional root close button. Register its background PNG with `.image(...)` and reference it in the component. It can then compile with an empty `screens/` directory. The [book renderer constraints](/reference/book-renderer/) still apply, including the close control, bitmap dimensions/ascent and overlapping controls. Cinematics use their normal schema and shader requirements through `.field("backend", "cinematic")` and `.field("cinematic", ...)`.
 
-Callback actions and conditions registered by addons work exactly as in YAML. Use the regular `callback` / `async-callback` schema data in component actions; Java/Kotlin handlers stay in their normal registration, outside the literal definition map.
+Callback actions and conditions registered by addons work exactly as in YAML. Use `CanvasActions.callback`, `CanvasActions.asyncCallback` and `CanvasConditions.callback`, or their raw schema forms; Java/Kotlin handlers stay in their normal registration, outside the literal definition map.
 
 ## Read, replace and remove
 

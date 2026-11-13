@@ -30,6 +30,8 @@ The `navigation_button` template takes `screen`, `label`, `x` and `y`. The `sele
 
 ## Main configuration
 
+The shipped `config.yml` includes inline explanations of each setting, limits, scale profiles and Nexo/external/standalone pack setup. Existing files retain their values and comments; replacing only the JAR does not insert new comments alongside already present fields.
+
 The Default column describes parser fallbacks when a field is omitted. The shipped `config.yml` enables `shaders.hover`, `shaders.animations` and `pack.hide-vanilla-book`, and selects `pack.missing: wait`. Existing configuration values are preserved when missing defaults are synchronized.
 
 | Field | Type | Default | Range or behavior |

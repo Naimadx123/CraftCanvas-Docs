@@ -29,7 +29,8 @@ Synchronous methods run on the player's owning entity region, or Paper's main th
 | `open(player, screen[, data])` | Use openAsync and inspect opened | Boolean, true only for OPENED |
 | `close(player)` | `closeAsync(player)` | Void / completion future |
 | `uiState(player, sessionId)` | `uiStateAsync(...)` | Immutable effective component state, or null for a stale session |
-| `updateComponent(player, sessionId, target, update)` | `updateComponentAsync(...)` | Replace/clear a session component override |
+| `updateComponent(player, sessionId, target, update)` | `updateComponentAsync(...)` | Replace/clear a complete session component override |
+| `patchComponent(player, sessionId, target, patch)` | `patchComponentAsync(...)` | Change supplied override properties and reset selected fields |
 | `setComponentCooldown(player, sessionId, target, seconds)` | `setComponentCooldownAsync(...)` | Set/clear a declared shared player cooldown |
 | `stopComponentAnimation(player, sessionId, target)` | `stopComponentAnimationAsync(...)` | Settle component motion at its final geometry |
 | `setSelection/setTab/setPage(player, sessionId, value)` | Corresponding `Async` method | Update server selection, tab or pagination |
@@ -69,7 +70,7 @@ See [dynamic lists](/developers/dynamic-lists/) for addon records, reusable YAML
 
 Registrations are automatically removed when their owning plugin disables. Handles support early removal. [Callbacks and providers](/developers/callbacks/) includes examples and ownership rules. [Bundles](/developers/bundles/) installs addon-owned YAML and artwork; [reloading](/developers/reload/) compiles them and returns diagnostics.
 
-See [code-defined screens](/developers/code-screens/) for creating screens without YAML and [component state](/developers/component-state/) for effective state reads and controlled edits.
+See [typed definition builders](/developers/definition-builders/) and [code-defined screens](/developers/code-screens/) for creating screens without YAML and [component state](/developers/component-state/) for effective state reads and controlled edits.
 
 ## Session snapshots
 

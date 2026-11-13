@@ -33,6 +33,7 @@ title: "Table of contents"
   * [Quick start](/developers/quick-start/)
   * [API reference](/developers/api/)
   * [Code-defined screens](/developers/code-screens/)
+  * [Typed definition builders](/developers/definition-builders/)
   * [Component state and edits](/developers/component-state/)
   * [Sessions and presentation](/developers/sessions/)
   * [GUI controls](/developers/gui/)

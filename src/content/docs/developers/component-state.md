@@ -51,6 +51,40 @@ Use `visible = false` to hide a declaration. `visible = true` still respects con
 
 Text and tooltip overrides are literal Adventure text, up to 4096 UTF-16 units with children, colors and bold. No MiniMessage/placeholder expansion, custom fonts, events, insertions, shadows, translations or non-text components are accepted. Body text also rejects unsupported decorations through the standard text renderer. Controls keep their current value suffix and progress/stat components keep their generated meter. Set `clearTooltip = true` with no tooltip value to remove both text/item tooltips and the component's shader hover marker for this session. Changing body text uses discrete motion for that component when needed.
 
+## Apply a partial change
+
+`patchComponent(player, sessionId, target, CanvasComponentPatch(...))` changes only supplied properties. Omitted properties keep their previous overrides. It is a new operation; `updateComponent` keeps its full replacement behavior.
+
+```kotlin
+canvas.patchComponent(player, sessionId, "claim", CanvasComponentPatch(text = Component.text("Claimed")))
+canvas.patchComponent(player, sessionId, "claim", CanvasComponentPatch(appearance = CanvasComponentAppearance.DISABLED))
+// The second call keeps the text "Claimed" and any previous tooltip/visibility override.
+```
+
+Use `resetProperties` to restore selected properties from configuration while preserving other overrides:
+
+```kotlin
+canvas.patchComponent(player, sessionId, "claim", CanvasComponentPatch(
+    resetProperties = setOf(CanvasComponentProperty.TEXT)
+))
+```
+
+Java has a fluent builder:
+
+```java
+canvas.patchComponent(player, sessionId, "claim", CanvasComponentPatch.builder()
+    .text(Component.text("Claimed"))
+    .appearance(CanvasComponentAppearance.DISABLED)
+    .build());
+canvas.patchComponent(player, sessionId, "claim", CanvasComponentPatch.builder()
+    .reset(CanvasComponentProperty.TEXT)
+    .build());
+```
+
+Resettable properties are `VISIBILITY`, `APPEARANCE`, `TEXT`, `TOOLTIP`. Resetting tooltip restores its configured text/item tooltip and hover behavior. `clearTooltip = true` hides the tooltip/hover marker instead. A new tooltip value clears a previous suppression flag. An omitted tooltip and `clearTooltip = false` preserve existing tooltip state. An empty patch preserves all properties. Setting and resetting the same property in one constructor is rejected; a builder's last call for a property takes precedence.
+
+The patch is immutable, including its copied reset set. `patchComponentAsync` schedules the same operation from any thread. The player/session checks run before target/render validation. The entire merged override is validated before mutation, so an invalid text component cannot partially change visibility or appearance. Protected controls, literal-text limits, render budgets and modal behavior are the same as `updateComponent`. To remove the entire override, continue using `updateComponent(..., null)`.
+
 ## Other state setters
 
 | Method | Effect |
