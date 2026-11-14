@@ -4,6 +4,17 @@ title: "Code-defined screens"
 
 `CanvasService.registerScreen(owner, definition)` registers an immutable screen in memory. It creates no screen YAML or asset manifest. Code screens use the same schema, compiler, conditions, actions, layout validation and resource-pack renderer as YAML screens. They appear in `screenCatalog()` after a successful full reload.
 
+## Renderer capabilities
+
+`canvas.rendererCapabilities("book-glyph")` returns an immutable set of features enabled in the published configuration. It is safe to read from any thread and returns an empty set for an unknown renderer or an unavailable service. Use it after `CanvasApi.whenReady(owner)` to choose a supported definition before registration:
+
+```kotlin
+val animate = "autoplay" in canvas.rendererCapabilities("book-glyph")
+val definitions = screens.definitions(animationEnabled = animate)
+```
+
+Features such as `autoplay`, `video-playback`, `cinematic-component` and `shader-hover-overlay` follow the configured shader switches. This describes server-side support, not the player's installed pack or graphics settings. `openDetailed` and the resource-pack lifecycle still determine whether a player can open the screen. Addons can bundle their own frame and images through code definitions rather than depending on the default example screens.
+
 ## Register and publish
 
 Obtain the service with `CanvasApi.whenReady(owner)`. Register on Paper's main thread or Folia's global thread, then call `canvas.reload()` and inspect the asynchronous result. Future continuations have no fixed thread context; schedule registrations on the global scheduler if a readiness continuation runs on another thread. Never block a tick thread with `join()` or `get()`.
