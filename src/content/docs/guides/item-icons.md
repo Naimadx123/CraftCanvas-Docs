@@ -10,11 +10,11 @@ The actual ItemStack is preserved. Its item model key selects the item definitio
 
 1. Keep `pack.nexo-auto-export: true`, the shipped default.
 2. Install CraftCanvas and restart. Run `/cc reload` after changing screen geometry.
-3. CraftCanvas exports its screen resources and requests a Nexo build. During `NexoPostPackGenerateEvent`, it reads the combined resources, prepares previews and appends its generated fonts/textures before Nexo packages and uploads the pack.
+3. CraftCanvas exports its screen resources and requests a Nexo build. During `NexoPostPackGenerateEvent`, it snapshots the combined resources. New model resources are prepared on the file worker. CraftCanvas requests a follow-up build if the running generation has not already included the prepared previews. Fonts and textures are appended synchronously during post generation, before packaging and upload.
 4. Accept the newly generated Nexo pack and wait for it to finish loading.
 5. Open `/cc open crafting`. Custom items in the player's inventory use their prepared model previews automatically.
 
-Model processing runs on CraftCanvas's file worker while the Nexo build waits for completion. The initial build can take longer. Repeated identical model resources reuse the preparation cache. There is no filesystem access, model parsing or image baking during book rendering or slot clicks.
+Model processing runs on CraftCanvas's file worker without blocking the server thread. New model resources can require another Nexo build; pending requests are combined, and no extra build is started when the running generation already includes the latest export and prepared previews. Addons registering different resources at separate times can still cause separate builds. CraftCanvas waits for the completed pack before opening screens. A completed worker never modifies a pack whose post-generation event has already returned. Repeated identical model resources reuse the preparation cache. There is no filesystem access, model parsing or image baking during book rendering or slot clicks.
 
 Rebuilding Nexo refreshes the model import, including changed textures, models and client-format overlays. Active screens are invalidated during generation. The generated preview resources are added to Nexo's final combined pack; they are not present in the independent CraftCanvas ZIP exported before Nexo's build.
 
@@ -24,6 +24,8 @@ Rebuilding Nexo refreshes the model import, including changed textures, models a
 | --- | --- |
 | Explicit item model | Resolves assets/namespace/items/path.json from ItemStack.item_model |
 | CustomModelData | Resolves range_dispatch floats, select strings and condition flags, including configured component indices |
+| Armor trims | Selects `trim_material` cases using the actual armor trim registry key |
+| Dyed model conditions | Supports `has_component` for `minecraft:dyed_color` with `ignore_default: false` |
 | Legacy overrides | Supports ordered custom_model_data-only predicates in item model JSON |
 | Flat generated items | Combines texture layers into the preview |
 | Cuboid models | Rasterizes model elements, face UVs, UV rotations and element rotations |
@@ -41,7 +43,7 @@ Previews are generated at 32 by 32 pixels and scaled by the existing slot fonts.
 
 Nexo's default `dye` tint with a white fallback is supported, including flat generated items. Cuboid faces only use their explicit `tintindex`; generated texture layers use their layer number. Tint colors accept packed RGB integers or three channels in the range 0..1. An item's actual dye or CustomModelData color that differs from the prepared default is rejected with a specific diagnostic; arbitrary new color variants are not generated during rendering. Referenced tint sources such as team or potion color remain unsupported. Unreferenced sources do not prevent importing a model.
 
-Input limits are 4096 item definitions/previews, 32768 source files, 256 MB total source bytes, 16 MB per texture, 32 million decoded texture pixels, 2048 cuboids per model and 250000 processed faces per preparation. Parent/composite depth is limited to 32. Limit failures have diagnostics. Whole-import failures prevent the affected Nexo pack from being considered ready.
+Input limits are 4096 item definitions/previews, 16 MB per texture, 32 million decoded texture pixels, 2048 cuboids per model and 250000 processed faces per preparation. Parent/composite depth is limited to 32. Limit failures have diagnostics. Whole-import failures prevent the affected Nexo pack from being considered ready.
 
 Models must reference textures available in the combined pack. A direct known vanilla model fallback can use its existing client sprite. Automatic processing of arbitrary external packs without the Nexo build adapter is not currently provided; the optional overrides below remain available in standalone setups.
 

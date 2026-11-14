@@ -40,12 +40,16 @@ The Default column describes parser fallbacks when a field is omitted. The shipp
 | strict | boolean | true | Reject unknown keys |
 | persistent-player-data | boolean | true | Enables player variables marked persistent |
 | item-icons | ordered map | empty | Optional overrides for item slot icons; Nexo model previews are automatic without rules; see [automatic item models](/guides/item-icons/) |
+| media.ffmpeg | executable name/path | ffmpeg | Used for MP4 frame/audio conversion on the file worker |
+| media.ffprobe | executable name/path | ffprobe | Reads source FPS, video and audio streams for MP4 imports |
 | shaders.hover | boolean | false | Enable hover overlays; Paper/Folia with matching vanilla clients 1.21.11 through 26.3; rebuild and load the pack after changes |
 | shaders.default-hover-overlay | native image ID or empty string | craftcanvas:selected_frame when registered | Automatic outline for eligible text-tooltip controls; empty disables automatic assignment; see [shader hover](/guides/shader-hover/) |
 | shaders.animations | boolean | false | Client image atlases and smooth native PNG/text component motion; false uses discrete book updates. Requires a matching vanilla 1.21.11 through 26.3 client; independent of shaders.hover |
-| limits.components | integer | 256 | 1..1024 per screen |
-| limits.tasks-per-session | integer | 16 | 1..128 delayed jobs |
-| limits.updates-per-tick | integer | 10 | 1..100 whole-screen renders |
+| limits.components | integer | 512 | 1..1024 per screen |
+| limits.tasks-per-session | integer | 64 | 1..128 delayed jobs |
+| limits.updates-per-tick | integer | 25 | 1..100 whole-screen renders |
+| limits.glyphs | integer | 0 | Optional nonnegative administrator-defined glyph budget; 0 disables the budget |
+| limits.video-atlas-tiles | integer | 0 | Optional nonnegative administrator-defined video tile budget; 0 disables the budget |
 | profiles | number map | compact: .75, normal: 1, large: 1.25 | Finite scales .5..1.5; supplied map replaces defaults |
 | pack.hide-vanilla-book | boolean | false | Replace the shared vanilla book.png with a transparent 256 x 256 texture; shipped file selects true; native controls and dimming remain |
 | pack.sender | enum | external | craftcanvas or external; fallback routing when automatic Nexo handling is inactive |
@@ -75,7 +79,7 @@ Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nex
 | layout | map | below | Reference geometry and manual profiles |
 | session.history | boolean | true | Up to 64 navigation frames |
 | session.refresh-interval-ticks | integer | 0 | Must remain zero: automatic book refresh is unsupported |
-| session.timeout-ticks | integer | 12000 | 20..72000 activity timeout |
+| session.timeout-ticks | integer | 12000 | Nonnegative activity timeout; 0 disables inactivity expiry |
 | variables | declaration map | empty | Typed initial values |
 | components | component map | empty | Stable component IDs |
 | first-open | optional map | absent | One intro per screen/player connection after the first successful render; see [startup animation](/guides/animations/#first-open-startup-animation) |
@@ -84,7 +88,7 @@ Readiness requires SUCCESSFULLY_LOADED for the expected UUID. With automatic Nex
 | book.variants | map of variable maps | empty | 1..12 variants for local-pages; forbidden with resend |
 | cinematic | map | required for cinematic | Effect/clip timing, assets and lifecycle actions; see [cinematics](/guides/animations/#fullscreen-cinematics) |
 
-Capabilities are glyph-rendering, vanilla-sprites, inventory-slots, component-click, component-tooltip, item-tooltip, asset-selection, session-item-tooltip, selection, absolute-layout, layers, refresh, frame-animation, text, images, no-blur, toggle, choice, stepper, slider, text-input, scroll, search, notification and component-animation. `shaders.animations` provides atlas-animation and smooth-component-animation; `shaders.hover` provides shader-hover-overlay. Requirements are inferred from components and actions. Sliders use discrete clicks without dragging; refresh is action-driven, not polling. `animate` uses an image atlas with `shaders.animations: true` and book resends otherwise. Both require resend update mode. See [renderer constraints](/reference/book-renderer/), [animation limits](/guides/animations/) and [component motion](/guides/interactive-ui/).
+Capabilities are glyph-rendering, vanilla-sprites, inventory-slots, component-click, component-tooltip, item-tooltip, asset-selection, session-item-tooltip, selection, absolute-layout, layers, refresh, frame-animation, text, images, no-blur, toggle, choice, stepper, slider, text-input, scroll, search, notification and component-animation. `shaders.animations` provides atlas-animation, smooth-component-animation and cinematic-component; `shaders.hover` provides shader-hover-overlay. Requirements are inferred from components and actions. Sliders use discrete clicks without dragging; refresh is action-driven, not polling. `animate` uses an image atlas with `shaders.animations: true` and book resends otherwise. Both require resend update mode. See [renderer constraints](/reference/book-renderer/), [animation limits](/guides/animations/) and [component motion](/guides/interactive-ui/).
 
 Schema 1 uses `backend` and `components`, structured resource references, and declared variables. `renderer`, `elements`, root `state`, shorthand asset strings and `on-click` are not schema 1 aliases. Schema 0 migrates renderer/elements only; use schema 1 for new files.
 
@@ -139,6 +143,7 @@ Map keys are stable IDs starting with a letter, unique throughout the screen inc
 | layer | integer | 0 | -1000..1000, stable ascending draw order |
 | text | formatted string | empty | Label/content; may contain line breaks |
 | search-text | formatted string | component text | Search words for an entry in a scroll container; labels can differ from matching terms |
+| cinematic | effect map | required for type cinematic | Procedural/legacy-frame effect with display region/fullscreen; inactive until play-cinematic; preserves the book session; see [embedded effects](/guides/animations/#cinematics-inside-an-open-book) |
 | animation | component motion map | absent | Finite relative movement/box scaling; duration-ticks, interval-ticks, from, easing, on-open; shaders optional; see [interactive UI](/guides/interactive-ui/) |
 | tooltip | formatted string list | empty | Native client text tooltip |
 | tooltip-item | item reference | absent | Native item tooltip; mutually exclusive with text tooltip |
@@ -147,7 +152,7 @@ Map keys are stable IDs starting with a letter, unique throughout the screen inc
 | hover-overlay | native resource reference or false | automatic when eligible | Explicit PNG overlay requires shaders.hover and a nonempty text tooltip; false opts this component out of automatic hover; item tooltips and resource fallbacks are unsupported |
 | hover-overlay-border | integer | 4 | Source PNG border in pixels, 0..64; nine-slice scaling keeps all four edges at this thickness multiplied by the manual profile; 0 stretches the entire overlay; requires hover-overlay |
 | asset-select | selector map | absent | Choose a previously compiled graphic through a declared string variable; mutually exclusive with asset and states.normal.asset |
-| autoplay | animation map | absent | Passive image loop: frames (2..128 native PNG references), interval-ticks (2..40, default 2); requires shaders.animations and session.timeout-ticks <= 12000 |
+| autoplay | animation map | absent | MP4 file relative to assets (optional width/height/fps, boolean audio, loop/volume), or nonempty PNG frames or frames-directory relative to assets; positive finite fps or a fraction, alternatively interval-ticks (2..40, default 2); loop; optional audio and nonnegative finite volume. No plugin-defined duration or frame-count ceiling. Video requires book.update: resend. See [source FPS and audio](/guides/animations/#video-at-source-fps) |
 | slider.track / slider.fill / slider.thumb | resource references | required for slider | Opaque native PNGs for inactive cells, filled cells and the selected cell |
 | states | appearance map | empty | Overrides below |
 | conditions.visible | condition | true | Also controls descendants |
@@ -235,7 +240,9 @@ components:
         - {provider: native, kind: image, id: 'craftcanvas:slider_fill'}
 ```
 
-Retain the screen's static background and X. With `shaders.animations: true`, the image loops as soon as the book is rendered. Several images can use different frame lists and intervals simultaneously. No session variable, click action or scheduled frame task is required. Images share their session's initial clock; redraws preserve it, while a redraw in another world restarts it. Use a timeout of at most 12000 ticks to stay inside the client clock window.
+Retain the screen's static background and X. With `shaders.animations: true`, the image loops as soon as the book is rendered. Several images can use different frame lists and intervals simultaneously. No session variable, click action or scheduled frame task is required. Images share their session's initial clock; redraws preserve it, while a redraw in another world restarts it. Set `session.timeout-ticks: 0` for no inactivity timeout. Long and unlimited sessions use renewable video clocks.
+
+Set `loop: false` inside `autoplay` for one pass that stops on its final frame; omit it or use `true` for looping playback. This does not create a completion callback or lock interaction.
 
 Autoplay accepts native PNG references without permissions, external font overrides or fallbacks. The image has no asset, selector, text, tooltip, actions, state overrides, children, padding, shadow, enabled/execute condition or click sounds. Color and visibility are supported. Shader displacement does not move native text hitboxes; provide a separate button for clicks and tooltips. An opaque looping image may cover a fixed button at the same position. Transparent images should use a separate control outside the image. All atlas tiles count toward the shared 512-tile limit. Autoplay is rejected when shaders are disabled; it does not fall back to repeated book opens.
 

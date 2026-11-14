@@ -33,7 +33,7 @@ In Java the same chain uses static methods, for example `CanvasComponentDefiniti
 | `position`, `offset`, `anchor`, `size`, `layer`, `margin`, `padding` | Integer GUI geometry |
 | `text`, `color`, `font`, `shadow`, `tooltip`, `tooltipItem`, `tooltipItemSlot` | Configured content and tooltip resources |
 | `align`, `verticalAlign`, `centered`, `overflow` | Layout using typed enums |
-| `asset`, `assetSelect`, `autoplay`, `animation` | Graphics, variable-bound graphics and declared motion |
+| `asset`, `assetSelect`, `autoplay`, `video`, `videoDirectory`, `videoFile`, `cinematic`, `animation` | Graphics, variable-bound graphics and declared motion |
 | `hover`, `hoverOverlay`, `clickSound`, `deniedSound` | Hover and interaction presentation |
 | `visibleWhen`, `enabledWhen`, `executeWhen` | Typed condition declarations |
 | `onClick`, `cooldown`, `debounce` | Typed action lists, player cooldown and short click debounce |
@@ -76,3 +76,46 @@ Typed methods reject invalid local ranges, incompatible method/type combinations
 The map API remains supported. `component(id, fields)`, component `.field(name, value)` and `CanvasActionDefinition.fromFields` / `CanvasConditionDefinition.fromFields` provide access to the complete schema and future extensions. These raw fields receive their normal validation during reload. All immutable definition `fields` maps are readable but cannot be modified. Nested typed helpers take precedence over matching raw keys when building a component. Repeated scalar helper calls use their last value.
 
 For current player state and frequent presentation edits, use [uiState, updateComponent and patchComponent](/developers/component-state/). Definition builders change declarations and require registration/reload; patches change only one session and do not rebuild the resource pack.
+
+## Finite image playback
+
+`component.autoplay(frames, intervalTicks, loop)` accepts a third boolean. Its default is `true`; `false` plays one pass and holds the final image through the client shader. Existing one- and two-argument overloads remain available. The clock starts at the first visible render and survives redraws. A new session starts a new pass. Addons still own gameplay timing, input gating and resource-pack readiness.
+
+### Video and audio
+
+Use `CanvasComponentDefinition.image("movie").video(frames, fps, loop, audio, volume)` for native FPS playback. `frames` is a list of registered native PNG references. FPS accepts positive finite shader-representable values; use `60000.0 / 1001.0` for fractional source rates. Video accepts a nonempty sequence without a plugin-defined frame-count or duration ceiling. Loop defaults to false, audio to null and volume to 1.0.
+
+```kotlin
+val movie = CanvasComponentDefinition.image("movie")
+    .position(112, 104)
+    .size(160, 90)
+    .layer(20)
+    .video(frames, 60000.0 / 1001.0, false, "craftcanvas:intro_audio", 0.8f)
+```
+
+Register the audio file with `CanvasScreenDefinition.Builder.sound("craftcanvas:intro_audio", audioFile)`. Directory-based playback is available through `.videoDirectory("videos/intro", 30.0, false, "craftcanvas:intro_audio")`; this path is relative to the CraftCanvas assets directory. Neither builder decodes MP4. Prepare the PNG sequence and Vorbis audio as described in [video at source FPS](/guides/animations/#video-at-source-fps).
+
+The core owns segment handoffs and audio cleanup. Addons retain resource-pack readiness and screen lifecycle control. Reopening the screen starts a new pass. Audio synchronization is best effort; this API does not expose media seek or pause.
+
+For long-running views, set `session.timeout-ticks` to `0` in the screen declaration. The core renews segment time origins without restarting playback or audio. Resource budgets default to disabled; administrators may opt into a positive `limits.glyphs` or `limits.video-atlas-tiles` budget.
+
+## MP4 files and book cinematics
+
+`CanvasComponentDefinition.image("movie").videoFile("videos/intro.mp4")` uses the same automatic import as YAML. Optional arguments configure looping, audio, volume, FPS, width and height. Files remain relative to CraftCanvas's `assets/` directory; FFmpeg/FFprobe are required on the server.
+
+```kotlin
+val effect = CanvasCinematicDefinition.builder(CanvasCinematicEffect.PORTAL)
+    .display(CanvasCinematicDisplay.REGION)
+    .timing(24, 20, 24)
+    .on(CanvasCinematicPhase.COMPLETE, CanvasActions.message("Finished"))
+    .build()
+val overlay = CanvasComponentDefinition.builder("transition", CanvasComponentType.CINEMATIC)
+    .position(104, 80).size(296, 152).layer(500)
+    .cinematic(effect)
+val play = CanvasActions.playCinematic("transition")
+val stop = CanvasActions.stopCinematic("transition")
+```
+
+Choose `CanvasCinematicDisplay.FULLSCREEN` for the whole game window. Timing, colors, direction, intensity, softness, frames and lifecycle actions share the configuration compiler. `CanvasCinematicDefinition.fromFields` and its builder's `field` method expose other schema fields.
+
+On the player's owner thread, `service.playCinematic(player, sessionId, target)` starts/restarts a visible declared target; `stopCinematic` stops it. Stale sessions return false, and matching sessions reject wrong component kinds. Neither method closes the book or rebuilds a pack. `uiState(...).components[target].cinematic` reports running state, elapsed/duration ticks, effect, display mode and covered/uncovering flags. The session-level cinematic flag includes component effects. These are server snapshots, not client acknowledgements.

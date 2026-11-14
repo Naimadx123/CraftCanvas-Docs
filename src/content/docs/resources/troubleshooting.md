@@ -28,6 +28,12 @@ Fix the reported configuration error and fully restart the server. Stop the serv
 
 Client appearance, outside-page hitboxes, cursor behavior, keyboard interception and update flicker must be checked in matching vanilla clients for each supported release family after changing resources or layouts. Compilation and unit tests cannot establish those visual results.
 
+## A tiny coloured square replaces an animation
+
+The atlas is being drawn as a normal bitmap glyph instead of being expanded by its text shader. Update CraftCanvas and rebuild the delivered pack, including its client-version overlays. Current builds recognise animation tiles independently of the vertex-buffer offset used by the 26.3 GUI renderer. For Nexo, rebuild/upload the combined pack and accept its new version; the standalone CraftCanvas ZIP alone is not the delivered pack.
+
+Use `/cc debug <player>` to check the actual pack identity and download status. Inspect the ZIP from the URL the client receives, along with client shader errors. Finding `animation.json` and animation PNGs does not establish that the effective text shader can decode them. Shader pixel tests should also cover nonzero vertex-buffer offsets.
+
 ## PNG dimensions differ from the manifest
 
 The manifest describes source pixels; a component's `size` describes display units. If `assets/icon.png` is 64 x 64, the manifest must say `width: 64` and `height: 64`, even when the button displays it at 32 x 32. Correct the manifest or PNG, run `/cc validate` and `/cc reload`, and publish the rebuilt pack. Do not edit a generated font JSON to repair the source.
@@ -42,7 +48,7 @@ Glyph height and vertical position must be representable in every allowed profil
 
 Older builds retained obsolete glyph assignments until the private-use range filled. Current builds automatically remove unused entries and preserve assignments for active glyph IDs. Update the plugin JAR, restart and run `/cc reload`; keep `.data/generated-pack/characters.yml` in place.
 
-If generation reports `Resource pack needs N active glyphs`, the current resource/layout set exceeds the 6400-character range. Reduce unused registered images, profile/layout variants or animated/hover components, then rebuild. The previous pack and registry remain intact after this failure. Duplicate or invalid saved codepoints are a separate registry error; restore a known-good backup rather than merging character maps manually.
+If generation reports a `limits.glyphs` budget error, an administrator-defined budget is enabled. Set `limits.glyphs: 0` to disable it, or choose a different positive budget, then rebuild. Budgets are disabled by default. The font encoder uses all 137468 Unicode private-use codepoints; exhausting those codepoints is a separate encoding error. The previous pack and registry remain intact after this failure. Duplicate or invalid saved codepoints are a separate registry error; restore a known-good backup rather than merging character maps manually.
 
 ## A button reports a cooldown
 

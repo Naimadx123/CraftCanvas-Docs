@@ -20,6 +20,8 @@ Action lists execute sequentially on the player owner thread (Paper main thread 
 | animate | `variable`, `frames`; optional `cycles`, `interval-ticks`, `slowdown-ticks`, `stop-at` | Finite playback: client texture atlas with `shaders.animations` enabled, book resends otherwise; see [animations](/guides/animations/) |
 | scroll | `target` scroll component ID, signed integer `rows` | -128..128 except zero; clamp a player's row offset; no wheel events |
 | animate-component | `target` component ID | Replay its configured movement/box-scale animation; finite book updates with or without shaders |
+| play-cinematic | `target` component ID | Start/restart a visible cinematic component without replacing its book |
+| stop-cinematic | `target` component ID | Stop a component effect; stopping an inactive target is accepted |
 | notify | `target` notification component ID, `text`; optional `duration-ticks` | Replace that player's message; duration 1..1200, default 60; text up to 2048 characters |
 | dismiss-notification | `target` notification component ID | Remove its message and motion early |
 | message | `text` string | Chat message |
@@ -50,7 +52,7 @@ Completion marks the active session dirty. Immediate sequences are processed bef
 
 See [animations](/guides/animations/) for the animate and random-variable actions.
 
-Cinematic screens run lifecycle lists under `cinematic.actions.start`, `covered`, `uncovering` and `complete`. Use `uncovering` for actions while a transition opens, including session-owned delays. Start and covered reject delays and async callbacks; title, input, confirm and animate are unavailable in every cinematic phase. See [fullscreen cinematics](/guides/animations/#fullscreen-cinematics) for timing and examples.
+Cinematic screens run lifecycle lists under `cinematic.actions.start`, `covered`, `uncovering` and `complete`. Use `uncovering` for actions while a transition opens, including session-owned delays. Start and covered reject delays and async callbacks; title, input, confirm and animate are unavailable in every standalone cinematic phase. Book components keep the title channel available; input, confirm and animate remain unavailable in their lifecycle lists. See [fullscreen cinematics](/guides/animations/#fullscreen-cinematics) for timing and examples.
 
 ## Authorization and purchases
 

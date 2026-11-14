@@ -96,17 +96,107 @@ This requires Paper/Folia and a matching vanilla client **1.21.11 through 26.3**
 
 Atlas followers must be passive `image` components with an `asset-select` bound to the animated variable. Frames require native PNG image/glyph/sprite assets. Static component colors and layout profiles are applied when generating the atlas. Text, actions, tooltips, shadows and state overrides on these images are rejected. Keep labels and clickable controls in separate components. Text and conditions cannot depend on the animated variable in this mode; use a separate status variable and change it before/after playback. Unsupported bindings fail validation rather than silently freezing or falling back to resends.
 
-Image tiles are packed into 240 x 240 textures that fit Minecraft's 256 x 256 font atlas. The generated pack allows at most 512 animation tiles across its screens and profiles. Reduce dimensions, frames or profiles if this limit is exceeded. GIFs and `.png.mcmeta` frame declarations are not read by the generator.
+Image tiles are packed into 240 x 240 textures that fit Minecraft's 256 x 256 font atlas. The generator does not impose an animation tile quota; an optional administrator-defined glyph budget can be configured. GIFs and `.png.mcmeta` frame declarations are not read by the generator.
 
 ## Autoplay images
 
-For looping cards, animated backgrounds inside a menu or several previews playing together, set `autoplay` on a passive `image`. Its `frames` list contains 2..128 native PNG resource references, and `interval-ticks` is 2..40 (default 2, or 10 FPS at 20 TPS). See [the complete YAML fragment](/reference/yaml/#looping-images-on-screen-open).
+For looping cards, animated backgrounds inside a menu or several previews playing together, set `autoplay` on a passive `image`. Short loops use 2..128 native PNG resource references with `interval-ticks` in 2..40 (default 2, or 10 FPS at 20 TPS). Longer sequences and native frame rates use the video mode below. See [the complete YAML fragment](/reference/yaml/#looping-images-on-screen-open).
 
-Each image loops independently using the client clock. It starts with the book's initial render and has no busy lock, completion actions, variable updates or server frame tasks. Buttons remain usable while it runs. A normal redraw preserves the clock; no periodic redraw is scheduled. Closing, navigation, reload and disconnect discard the session clock. Session timeout must be at most 12000 ticks. Core shaders and a matching supported vanilla client (1.21.11 through 26.3) are required; unsupported configurations fail validation.
+By default, each image loops independently using the client clock. Set `autoplay.loop: false` for a single pass that holds the last frame locally. This supports finite dice throws and previews without padded repeat frames or a timely closing packet. The default remains `true` for existing files. It starts with the book's initial render and has no busy lock, completion actions, variable updates or server frame tasks. Buttons remain usable while it runs. A normal redraw preserves the clock; no periodic redraw is scheduled. Closing, navigation, reload and disconnect discard the session clock. Use `session.timeout-ticks: 0` to disable inactivity expiry. Long or unbounded sessions use renewable video clocks automatically. Core shaders and a matching supported vanilla client (1.21.11 through 26.3) are required; unsupported configurations fail validation.
 
 Keep interaction in separate components. Moving shader pixels do not provide corresponding hit areas. A fixed button can sit underneath an opaque animation; for transparent artwork, place the control outside the image. This feature does not make `animate` sequences run concurrently or execute actions when particular frames are displayed.
 
 The shader reads Minecraft's normal `GameTime` clock. Start time and final choice travel in marker glyphs; CraftCanvas does not send fake time packets or change world time. The server owns rewards, eligibility and action completion. Network delay, low TPS or a modified client can affect visible timing; exact frame display is not acknowledged by the client. Verify appearance, GUI scales, timing and closing in the actual game before deployment.
+
+## Import an MP4 directly
+
+Place a source file at `plugins/CraftCanvas/assets/videos/intro.mp4`. Install [FFmpeg and FFprobe](https://ffmpeg.org/download.html) on the server, or set their executable paths in `config.yml`:
+
+```yaml
+media:
+  ffmpeg: ffmpeg
+  ffprobe: ffprobe
+```
+
+Declare the image below inside a book screen. No PNG extraction, audio manifest or frame list is needed:
+
+```yaml
+session:
+  timeout-ticks: 0
+components:
+  movie:
+    type: image
+    position: {x: 112, y: 82}
+    size: {width: 288, height: 162}
+    layer: 20
+    autoplay:
+      file: videos/intro.mp4
+      loop: false
+      audio: true
+```
+
+The file path is relative to `assets/`. Preparation runs on the file worker, generates PNG frames and extracts the first audio stream as streaming stereo OGG Vorbis. Silent files work without an audio track. Source resolution and constant frame rate are retained by default. Variable-frame-rate input is resampled to its average frame rate because the atlas uses a fixed playback rate. Audio starts with the first successful book render; synchronization remains approximate.
+
+Optional `fps` accepts a positive finite value or fraction. Optional positive `width` and `height` resize extracted frames; supplying only one preserves the source aspect ratio. `audio: false` skips extraction, and `volume` sets nonnegative playback volume. `loop` defaults to false. MP4 declarations cannot also use `frames`, `frames-directory` or `interval-ticks`.
+
+Conversions are cached under `.data/media/` by source content and conversion options. Identical sources reuse prepared files without running the tools again. A missing cached frame triggers preparation again. No plugin-defined duration, frame-count, resolution or input-size ceiling is added. Disk space, conversion time, pack size and client performance remain the administrator's responsibility. The normal optional glyph/video atlas budgets still apply if explicitly configured.
+
+Reload, rebuild/load the combined pack and open the screen. Converted resources enter the same pack and Nexo readiness workflow as PNG sequences. See [the MP4 example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/video_mp4.yml). Existing screens are kept if a reload cannot import a file; missing executables and conversion errors include configuration source diagnostics.
+
+## Video at source FPS
+
+Use `autoplay.fps` for a fixed frame rate, including fractional rates such as `30000/1001` or `60000/1001`. The shader selects frames between server ticks; 30 or 60 FPS does not require 30 or 60 book updates per second. Clips accept a nonempty frame sequence without a plugin-defined frame-count or duration ceiling. FPS must be positive, finite and representable by the shader; no policy range is imposed. The client still needs sufficient rendering performance and a matching vanilla shader pipeline.
+
+For an optional manual workflow, prepare the MP4 on your computer with [FFmpeg](https://ffmpeg.org/ffmpeg.html). Create `assets/videos/intro/` first and run these commands from the CraftCanvas data directory. The first command reads the frame rate of a constant-frame-rate source. Copy its fraction into `fps` below. Variable-frame-rate sources need conversion to a fixed frame rate first; PNG sequences do not retain per-frame presentation timestamps.
+
+```sh
+ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 input.mp4
+ffmpeg -i input.mp4 -an -vf "scale=160:90:force_original_aspect_ratio=decrease,pad=160:90:(ow-iw)/2:(oh-ih)/2" -fps_mode passthrough assets/videos/intro/frame_%06d.png
+ffmpeg -i input.mp4 -vn -c:a libvorbis -q:a 5 assets/videos/intro.ogg
+```
+
+Register the extracted Vorbis audio in `assets/video.yml`:
+
+```yaml
+schema-version: 1
+sounds:
+  craftcanvas:intro_audio: {file: videos/intro.ogg}
+```
+
+Create `screens/movie.yml`:
+
+```yaml
+schema-version: 1
+id: movie
+extends: frame
+layout:
+  profile: normal
+  profiles: [normal]
+session:
+  timeout-ticks: 0
+components:
+  movie:
+    type: image
+    position: {x: 112, y: 104}
+    size: {width: 160, height: 90}
+    layer: 20
+    autoplay:
+      frames-directory: videos/intro
+      fps: 30000/1001
+      loop: false
+      audio: craftcanvas:intro_audio
+      volume: 1.0
+```
+
+Then reload, rebuild/load the resource pack and open `/cc open movie`. Frame directories are relative to `plugins/CraftCanvas/assets`, nonrecursive and sorted by filename; use zero-padded frame numbers. All PNGs in a directory must have the same dimensions. Directory frames are compiled into atlases without separate static font entries. The server uses the prepared PNG/OGG files and does not need FFmpeg at runtime.
+
+`fps` and `interval-ticks` are mutually exclusive. `frames` can replace `frames-directory` with explicit native PNG references. FPS playback and directory/audio playback default to `loop: false`; existing short interval-based autoplay retains `loop: true`. A one-shot clip holds its last frame. Looping restarts its audio track at the next cycle.
+
+Video uses adaptive atlas segments of up to 128 frames. CraftCanvas preloads neighbouring segment occurrences, including the next loop when needed. Each segment carries its own local time origin. Long playback and looping refresh that origin before the client clock wraps, while the full movie position and audio continue independently. Very slow sequences use static single-frame segments. Redraws do not restart audio. `book.update: resend` and `shaders.animations: true` are required. Unlike short autoplay loops, video does make periodic book updates. Use X or `/cc close` to stop playback: Escape does not notify the server reliably, so a later handoff may reopen the book.
+
+`limits.video-atlas-tiles` and `limits.glyphs` default to `0`, disabling administrator-defined budgets. A positive value enables the corresponding budget at the administrator's request. Video, regular animation, cinematic and component-motion atlases have no fixed tile quota. Administrators choose their own resolution, duration, frame count and allowed layout profiles according to the resource pack they want to build.
+
+Audio is a registered `craftcanvas:` OGG Vorbis sound. Video audio is exported with streaming enabled, starts after the initial successful screen render, stays playing across segment handoffs and stops on hiding the component, navigation, close, reload or disable. A world change restarts both tracks. Volume accepts nonnegative finite values representable by the sound engine. Use an audio file aligned to the first frame and matching the clip duration. Image timing and sound packets use separate client systems, so synchronization is best effort; the client supplies no playback acknowledgement, pause/seek control or sample-accurate A/V clock. Server lag, network delay and client load can affect timing.
 
 ## Connect frames to artwork
 
@@ -163,6 +253,40 @@ Declare a second session string variable, for example `animation_result`, and ad
 ```
 
 The server chooses a value uniformly before playback. Every possible result must be present in `frames`. Reward delivery and eligibility are separate actions or addon callbacks; animation alone does not give items.
+
+## Cinematics inside an open book
+
+A `type: cinematic` component uses the effect definitions below without replacing the current screen. `cinematic.display: region` is the default: `position` and `size` define its profile-scaled rectangle. Choose `fullscreen` to expand the same effect across the game window. Neither mode uses the title channel or creates a new book session.
+
+```yaml
+components:
+  transition:
+    type: cinematic
+    position: {x: 94, y: 50}
+    size: {width: 320, height: 206}
+    layer: 500
+    cinematic:
+      effect: portal
+      display: region
+      close-ticks: 24
+      hold-ticks: 20
+      open-ticks: 24
+  play:
+    type: button
+    position: {x: 112, y: 100}
+    size: {width: 136, height: 24}
+    layer: 20
+    text: '<aqua>PLAY'
+    actions:
+      click:
+        - {type: play-cinematic, target: transition}
+```
+
+`play-cinematic` starts or restarts a visible target; `stop-cinematic` removes it. The component is passive and initially inactive. Place it at a higher layer than the artwork it should cover. While it runs, hover overlays, tooltips and clicks are blocked on lower-layer components that intersect the region. Fullscreen mode blocks all lower layers. Controls outside a region or above the effect stay active. Interaction returns when the effect finishes or stops; the book session remains open.
+
+The `start`, `covered`, `uncovering` and `complete` lifecycle lists work on the existing session. Start follows the first successful effect render. Completion removes only the effect: the book, selected page and session variables remain active. A `title` action is allowed for a book component because these effects do not use the title channel. Input, confirmation and frame-animation actions remain unavailable within cinematic lifecycle lists; start/covered also reject delayed and asynchronous actions. Hiding the component cancels playback. Closing, navigation, reload and disconnect discard its state. Components need `book.update: resend`, `shaders.animations: true` and a fixed position outside scroll containers.
+
+The bundled **Cinema** app exposes all 18 effects from `examples/cinematics`, each with **REGION** and **FULLSCREEN** buttons across six pages. A stops the current effect; B returns. Launch it from the third launcher page or `/cc open cinema`. Existing installations retain their edited screens: copy the updated `screens/cinema.yml` and `screens/home.yml` from the plugin resources to install this example. See [the smaller two-mode example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/cinematic_components.yml).
 
 ## Fullscreen cinematics
 
@@ -254,7 +378,7 @@ Here the teleport runs while covered; the sound runs about five server ticks aft
 | actions.uncovering | action list | empty | Transitions with open-ticks greater than zero; fires when opening starts; supports session-owned delays |
 | actions.complete | action list | empty | Fires after playback; delays remain subject to the session timeout |
 
-Total duration must be 1..12000 ticks. For movies it is `ceil(frame-count * 20 / fps) + hold-ticks`. Session timeout must exceed duration by at least 20 ticks; allow extra time for delayed uncovering or complete actions. Normal ID, permission, title metadata, variables, requirements and session settings are supported. Menu themes, layout, components, book and workbench fields are rejected. Capabilities are cinematic, fullscreen, atlas-animation, procedural-transitions and no-blur; there are no clicks/tooltips. Title, input, confirm and animate lifecycle actions are rejected because they replace the HUD channel or require menu components.
+Total duration must be 1..12000 ticks. For movies it is `ceil(frame-count * 20 / fps) + hold-ticks`. A positive session timeout must exceed duration by at least 20 ticks; `0` disables inactivity expiry; allow extra time for delayed uncovering or complete actions. Normal ID, permission, title metadata, variables, requirements and session settings are supported. Menu themes, layout, components, book and workbench fields are rejected. Capabilities are cinematic, fullscreen, atlas-animation, procedural-transitions and no-blur; there are no clicks/tooltips. Title, input, confirm and animate lifecycle actions are rejected because they replace the HUD channel or require menu components.
 
 ## Customize a procedural transition
 
@@ -291,7 +415,7 @@ These are overlay effects. Glitch does not distort or recolor the world's render
 
 ## Import a movie
 
-Convert movies to PNG sequences before pack generation. MP4 playback, streaming and embedded audio are unavailable. At 24 FPS, 256 frames cover about 10.7 seconds. Reduce FPS or split longer footage into separate screens. Start with small frames such as 160 x 90: frame count/resolution increase pack size and GPU memory. The combined cinematic limit is 512 tiles, separate from menu animation tiles.
+This finite title/HUD format accepts prepared PNG sequences rather than MP4 files. For unrestricted-duration playback with audio inside a screen, use [video at source FPS](#video-at-source-fps). At 24 FPS, 256 frames cover about 10.7 seconds. Reduce FPS or split longer footage into separate screens. Start with small frames such as 160 x 90: frame count/resolution increase pack size and GPU memory. Cinematic atlases have no fixed tile quota; the administrator may set an optional shared glyph budget.
 
 Create a `frames` directory and export a short clip using an external tool such as FFmpeg. Its [fps and scale filters](https://ffmpeg.org/ffmpeg-filters.html) control frame rate and dimensions:
 
@@ -311,3 +435,5 @@ The server schedules lifecycle actions but receives no confirmation of a display
 The fragment shader handles marked cinematic glyphs; unmarked text retains its normal path. With Nexo 1.29.1, both stages compose with its verified GIF shader pair. Unknown shaders are rejected. Test fullscreen coverage, GUI Scale, title ordering, F1, closing, reconnecting and competing title plugins in a vanilla client before deployment. Standalone GPU checks do not verify those Minecraft behaviors.
 
 If transitions are invisible and movie borders contain repeated image fragments with Nexo, verify that the current plugin and rebuilt merged pack are loaded. `/cc debug capabilities` should include `cinematic masks active` in the shader diagnostic. Nexo imports font JSON into its typed font registry; CraftCanvas checks that registry and raw files in active overlays before composing the fragment shader. A missing expected font stops generation instead of silently omitting masks.
+
+Finite autoplay is available through `builder.autoplay(frames, intervalTicks, false)` in the public API. Opening a new session starts a new pass; an ordinary redraw preserves its clock. Closing a view cancels its session independently of addon gameplay. Finite autoplay does not hold a busy lock or execute completion actions; the addon owns input gating and gameplay timing. Long or unlimited sessions use renewable video clocks, preserving playback across client-clock wraps.
