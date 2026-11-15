@@ -1,0 +1,81 @@
+schema-version: 1
+id: catalog
+extends: frame
+title: '<gold>Equipment catalog'
+layout: {overlap: allow}
+components:
+  heading:
+    text: '<gold>EQUIPMENT CATALOG'
+  bow:
+    type: button
+    position: {x: 123, y: 110}
+    size: {width: 43, height: 45}
+    layer: 20
+    asset: {provider: native, kind: image, id: 'craftcanvas:archer'}
+    tooltip-item: {provider: vanilla, kind: item, id: BOW}
+    data: {page: 0}
+    actions:
+      click:
+        - {type: select, value: bow}
+        - {type: message, text: '<gray>A precise ranged weapon.'}
+  bow_description:
+    type: text
+    position: {x: 191, y: 110}
+    size: {width: 198, height: 42}
+    layer: 20
+    overflow: wrap
+    text: '<green>Ranger bow<newline><gray>Click to inspect and select. Hover the icon to preview the item.'
+    data: {page: 0}
+  sword:
+    type: button
+    position: {x: 123, y: 110}
+    size: {width: 43, height: 45}
+    layer: 20
+    asset: {provider: native, kind: image, id: 'craftcanvas:warrior'}
+    tooltip-item: {provider: vanilla, kind: item, id: DIAMOND_SWORD}
+    data: {page: 1}
+    conditions:
+      enabled: {permission: craftcanvas.admin}
+    states:
+      disabled: {color: '#555555'}
+    actions:
+      click:
+        - {type: select, value: sword}
+        - {type: message, text: '<green>Sword selected.'}
+  sword_description:
+    type: text
+    position: {x: 191, y: 110}
+    size: {width: 198, height: 42}
+    layer: 20
+    overflow: wrap
+    text: '<gold>Champion sword<newline><gray>Requires craftcanvas.admin. Hover the icon to preview the item.'
+    data: {page: 1}
+  previous:
+    type: pagination
+    align: center
+    vertical-align: center
+    position: {x: 123, y: 195}
+    size: {width: 109, height: 20}
+    padding: 4
+    layer: 20
+    text: '<yellow>Previous'
+    tooltip: ['<white>Previous page']
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    actions:
+      click: [{type: page, value: previous}]
+  next:
+    type: pagination
+    align: center
+    vertical-align: center
+    position: {x: 272, y: 195}
+    size: {width: 109, height: 20}
+    padding: 4
+    layer: 20
+    text: '<yellow>Next'
+    tooltip: ['<white>Next page']
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    conditions:
+      enabled:
+        compare: {left: '{session.page}', operator: lt, right: 1}
+    actions:
+      click: [{type: page, value: next}]

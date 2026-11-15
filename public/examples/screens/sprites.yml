@@ -1,0 +1,71 @@
+schema-version: 1
+id: sprites
+extends: frame
+title: '<gold>Vanilla sprites'
+components:
+  heading:
+    text: '<gold><bold>VANILLA SPRITES'
+  description:
+    type: text
+    position: {x: 109, y: 88}
+    size: {width: 293, height: 20}
+    layer: 20
+    text: '<white>Client textures. No copied item PNGs.'
+    overflow: wrap
+  emerald:
+    type: button
+    position: {x: 120, y: 121}
+    size: {width: 22, height: 22}
+    layer: 20
+    asset: {provider: vanilla, kind: sprite, id: 'minecraft:item/emerald'}
+    tooltip-item: {provider: vanilla, kind: item, id: EMERALD}
+    actions:
+      click: [{type: message, text: '<green>Emerald selected.'}]
+  diamond:
+    type: button
+    position: {x: 169, y: 121}
+    size: {width: 22, height: 22}
+    layer: 20
+    asset: {provider: vanilla, kind: sprite, id: 'minecraft:item/diamond'}
+    tooltip: ['<white>Diamond <sprite:"minecraft:items":"minecraft:item/diamond">', '<gray>Click to open the reward wheel.']
+    actions:
+      click: [{type: open, screen: reward_wheel}]
+  gold:
+    type: image
+    position: {x: 218, y: 121}
+    size: {width: 22, height: 22}
+    layer: 20
+    asset: {provider: vanilla, kind: sprite, id: 'minecraft:item/gold_ingot'}
+    tooltip-item: {provider: vanilla, kind: item, id: GOLD_INGOT}
+  iron:
+    type: image
+    position: {x: 267, y: 121}
+    size: {width: 22, height: 22}
+    layer: 20
+    asset: {provider: vanilla, kind: sprite, id: 'minecraft:item/iron_ingot'}
+  lapis:
+    type: image
+    position: {x: 316, y: 121}
+    size: {width: 22, height: 22}
+    layer: 20
+    asset: {provider: vanilla, kind: sprite, id: 'minecraft:item/lapis_lazuli'}
+  redstone:
+    type: image
+    position: {x: 365, y: 121}
+    size: {width: 22, height: 22}
+    layer: 20
+    asset: {provider: vanilla, kind: sprite, id: 'minecraft:item/redstone'}
+  inline:
+    type: text
+    position: {x: 109, y: 172}
+    size: {width: 293, height: 20}
+    layer: 20
+    text: '<white>Inline: <sprite:"minecraft:items":"minecraft:item/diamond"> Diamond, <sprite:"minecraft:blocks":"minecraft:block/stone"> Stone'
+    overflow: wrap
+  note:
+    type: text
+    position: {x: 109, y: 203}
+    size: {width: 293, height: 20}
+    layer: 20
+    text: '<gray>Hover for tooltips. Click the diamond to spin.'
+    overflow: wrap

@@ -1,0 +1,93 @@
+schema-version: 1
+id: variants
+extends: frame
+title: '<gold>Local selection variants'
+requires: [glyph-rendering, component-click, component-tooltip, no-blur]
+book:
+  update: local-pages
+  variants:
+    archer: {chosen: archer}
+    mage: {chosen: mage}
+    warrior: {chosen: warrior}
+variables:
+  chosen:
+    type: string
+    default: archer
+components:
+  heading:
+    type: text
+    layer: 10
+    text: '<gold><bold>SELECT A CLASS'
+  selected:
+    type: text
+    position: {x: 99, y: 181}
+    size: {width: 292, height: 13}
+    layer: 20
+    text: '<white>Selected: {session.chosen}'
+  archer:
+    type: button
+    position: {x: 109, y: 120}
+    size: {width: 33, height: 34}
+    layer: 30
+    asset: {provider: native, kind: image, id: 'craftcanvas:archer'}
+    tooltip: ['<gold>Archer', '<gray>Click to select this class.']
+    states:
+      selected:
+        when:
+          variable-equals: {name: chosen, value: archer}
+        overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    actions:
+      click:
+        - {type: local-page, value: archer}
+  mage:
+    type: button
+    position: {x: 204, y: 120}
+    size: {width: 33, height: 34}
+    layer: 30
+    asset: {provider: native, kind: image, id: 'craftcanvas:mage'}
+    tooltip: ['<gold>Mage', '<gray>Click to select this class.']
+    states:
+      selected:
+        when:
+          variable-equals: {name: chosen, value: mage}
+        overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    actions:
+      click:
+        - {type: local-page, value: mage}
+  warrior:
+    type: button
+    position: {x: 299, y: 120}
+    size: {width: 33, height: 34}
+    layer: 30
+    asset: {provider: native, kind: image, id: 'craftcanvas:warrior'}
+    tooltip: ['<gold>Warrior', '<gray>Click to select this class.']
+    states:
+      selected:
+        when:
+          variable-equals: {name: chosen, value: warrior}
+        overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    actions:
+      click:
+        - {type: local-page, value: warrior}
+  confirm:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 319, y: 209}
+    size: {width: 95, height: 20}
+    padding: 4
+    layer: 100
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    text: '<green>CONFIRM'
+    tooltip: ['<gray>Send this page choice to the server.']
+    actions:
+      click:
+        - {type: select, value: '{session.chosen}'}
+        - {type: message, text: '<green>Server confirmed {session.chosen}.'}
+  console_a:
+    actions:
+      click:
+      - {type: select, value: '{session.chosen}'}
+      - {type: message, text: '<green>Server confirmed {session.chosen}.'}
+    tooltip:
+    - <white>A / Confirm

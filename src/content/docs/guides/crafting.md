@@ -6,7 +6,7 @@ The `crafting` example displays a 5 by 5 crafting board beside the player's stor
 
 ## Install and open
 
-A fresh installation includes the example automatically. Existing screens are never overwritten. For an existing installation, replace `screens/crafting.yml` and copy `templates/item_slot.yml`, `assets/crafting.yml` and `assets/crafting_slot_frame.png` from `src/main/resources/` into the same paths under `plugins/CraftCanvas/`. The previous palette example's `templates/crafting_cell.yml`, `actions/clear_crafting_board.yml` and `actions/load_crafting_recipe.yml` are no longer used.
+A fresh installation includes the example automatically. Existing screens are never overwritten. For an existing installation, replace `screens/crafting.yml` and copy `templates/item_slot.yml`, `assets/crafting.yml` and `assets/crafting_slot_frame.png` from the supplied CraftCanvas JAR (open it as a ZIP) into the same paths under `plugins/CraftCanvas/`. The previous palette example's `templates/crafting_cell.yml`, `actions/clear_crafting_board.yml` and `actions/load_crafting_recipe.yml` are no longer used.
 
 Run `/cc reload` and load the newly generated pack through your configured sender. With Nexo auto-export, rebuild/send Nexo's combined pack after CraftCanvas reloads. Open the screen with:
 

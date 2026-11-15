@@ -1,12 +1,19 @@
 ---
-title: "Themes, templates and shared definitions"
+title: Themes and templates
+description: Reuse a screen frame, button layout, click sequence or translated label.
 ---
 
-Theme fields: schema-version, id, optional extends, screen-defaults and component-defaults. Template fields: schema-version, id, optional extends, parameters and component. Exact `{{parameter}}` tokens preserve scalar type; embedded tokens stringify it. Missing/undeclared parameters fail.
+You do not need to copy the whole console into each menu. Use screen inheritance for a shared layout, then add the other kinds of reuse when they help:
 
-Action-file fields: schema-version, id and actions. `{ref: action_id}` expands a shared list. Language fields: schema-version, locale and entries; player locale is selected with en_US fallback. Entries use trusted administrator formatting.
+| I want to reuse... | Use |
+| --- | --- |
+| A background and physical controls | A parent screen with `extends` |
+| Colors and other defaults | A theme |
+| A button with a different label or target each time | A template |
+| The same click sequence | A shared action list |
+| Labels in several languages | Language entries |
 
-Maps merge recursively with local values winning; lists replace completely. References use registry IDs, not arbitrary file paths. Inheritance, template expansion, shared-action reference cycles fail. See [actions and conditions](/developers/api/).
+All references use the `id` inside a file, not its filename. Local values override inherited ones. Maps merge by key; a list you supply replaces the inherited list completely.
 
 ## Inherit a reusable frame
 
@@ -21,7 +28,7 @@ components:
     text: '<gold>TRAVEL'
 ```
 
-The child keeps the inherited background and X. Only `heading.text` is replaced. IDs refer to loaded definitions, so `frame` may live in a nested screen directory without changing `extends`.
+The child keeps the inherited console and Exit button. Only `heading.text` is replaced. IDs refer to loaded definitions, so `frame` may live in a nested screen directory without changing `extends`.
 
 If an inherited value fails validation, the error identifies both the affected screen and the declaration that supplied that value. For example, `eyes.yml [screen=curtain, component=-, inherited-from=eyes] $.cinematic.actions.covered[1].type` means the second `covered` action comes from `eyes`, even though validation failed while loading `curtain`. Fix that action in `eyes.yml`, or replace the `covered` list in the child. A local override is reported against the child's own file. At startup, only rejected screens are skipped; a failed reload keeps the previous configuration.
 
@@ -52,8 +59,8 @@ open_settings:
   parameters:
     screen: settings
     label: Settings
-    x: 44
-    y: 132
+    x: 112
+    y: 128
 ```
 
 To write your own template, create `templates/menu_link.yml`:
@@ -66,7 +73,7 @@ parameters:
   label: Home
 component:
   type: button
-  position: {x: 44, y: 132}
+  position: {x: 112, y: 128}
   size: {width: 240, height: 32}
   padding: 8
   layer: 20
@@ -112,3 +119,10 @@ entries:
 ```
 
 Use `text: '{lang.menu-title}'` in a component or message. Add a language file with the corresponding locale and keys for another language. Missing locales fall back to `en_US`; missing keys display the key.
+
+
+## Parameters and values
+
+`{{label}}` is a template parameter, filled in when the configuration reloads. `{player.name}` and your variable placeholders are filled in for a player when the screen is shown. A template token used as the whole value keeps its type, so a numeric position stays a number.
+
+Templates must declare each parameter they use. Parent and reference cycles are rejected during validation. The [YAML reference](/reference/yaml/#themes-templates-actions-and-languages) lists the fields for these files.

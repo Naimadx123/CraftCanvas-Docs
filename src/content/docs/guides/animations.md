@@ -2,9 +2,21 @@
 title: "Animations"
 ---
 
-For position/box-scale animations of individual UI components, see [component animations](/guides/interactive-ui/#component-animations). They use smooth client motion with `shaders.animations: true` and discrete updates otherwise, separately from the image-frame playback below.
+Choose the kind of playback you need:
 
-`animate` plays a finite sequence of frame IDs stored in a session string variable. Bind that variable to `asset-select` to animate an image. Resources are prepared when building the pack. Playback follows `shaders.animations` in `config.yml`:
+| I want to... | Use |
+| --- | --- |
+| Move or resize a component | [Component animations](/guides/interactive-ui/#component-animations) |
+| Play an MP4 file with its audio | [MP4 import](#import-an-mp4-directly) |
+| Start a frame sequence when a screen opens | [Autoplay](#autoplay-images) |
+| Spin a wheel or stop on a chosen frame | [The animate action](#connect-frames-to-artwork) |
+| Cover part or all of an open menu with an effect | [Cinematic components](#cinematics-inside-an-open-book) |
+| Show a transition over the game world | [Fullscreen cinematics](#fullscreen-cinematics) |
+
+
+To move or resize a button, label or image, see [component animations](/guides/interactive-ui/#component-animations). They use smooth client motion with `shaders.animations: true` and discrete updates otherwise, separately from the image-frame playback below.
+
+`animate` changes an image through a list of frames, then stops. An image uses `asset-select` to choose which graphic to show; a string variable holds the current frame ID. Resources are prepared when building the pack. Playback follows `shaders.animations` in `config.yml`:
 
 | Setting | Playback |
 | --- | --- |
@@ -13,7 +25,7 @@ For position/box-scale animations of individual UI components, see [component an
 
 Both modes use the same action, timing, cycles and server-selected `stop-at`. Both require `book.update: resend`; `local-pages` is rejected. Unrelated state updates can still resend a book during atlas playback without resetting its start time.
 
-Screen IDs, variable names, frame IDs and resource references are supplied by YAML. Several components can follow the same variable to change together. The [standalone color-pulse example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/animation.yml) demonstrates a reusable image sequence; [the YAML guide](/reference/yaml/#animating-your-own-components) explains adding your own artwork.
+Screen IDs, variable names, frame IDs and resource references are supplied by YAML. Several components can follow the same variable to change together. The [standalone color-pulse example](/examples/animation.yml) demonstrates a reusable image sequence; [the YAML guide](/reference/yaml/#animating-your-own-components) explains adding your own artwork.
 
 | Field | Type | Default | Limits and meaning |
 | --- | --- | --- | --- |
@@ -141,7 +153,7 @@ Optional `fps` accepts a positive finite value or fraction. Optional positive `w
 
 Conversions are cached under `.data/media/` by source content and conversion options. Identical sources reuse prepared files without running the tools again. A missing cached frame triggers preparation again. No plugin-defined duration, frame-count, resolution or input-size ceiling is added. Disk space, conversion time, pack size and client performance remain the administrator's responsibility. The normal optional glyph/video atlas budgets still apply if explicitly configured.
 
-Reload, rebuild/load the combined pack and open the screen. Converted resources enter the same pack and Nexo readiness workflow as PNG sequences. See [the MP4 example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/video_mp4.yml). Existing screens are kept if a reload cannot import a file; missing executables and conversion errors include configuration source diagnostics.
+Reload, rebuild/load the combined pack and open the screen. Converted resources enter the same pack and Nexo readiness workflow as PNG sequences. See [the MP4 example](/examples/video_mp4.yml). Existing screens are kept if a reload cannot import a file; missing executables and conversion errors include configuration source diagnostics.
 
 ## Video at source FPS
 
@@ -233,7 +245,7 @@ components:
         - {type: message, text: '<green>Animation finished.'}
 ```
 
-Reload, publish the pack and click Play. Several images can follow the same variable. The [complete pulse example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/animation.yml) and the shipped `reward_wheel` screen work in both modes without changing their animation actions.
+Reload, publish the pack and click Play. Several images can follow the same variable. The [complete pulse example](/examples/animation.yml) and the shipped `reward_wheel` screen work in both modes without changing their animation actions.
 
 ## Randomize the final frame
 
@@ -286,13 +298,13 @@ components:
 
 The `start`, `covered`, `uncovering` and `complete` lifecycle lists work on the existing session. Start follows the first successful effect render. Completion removes only the effect: the book, selected page and session variables remain active. A `title` action is allowed for a book component because these effects do not use the title channel. Input, confirmation and frame-animation actions remain unavailable within cinematic lifecycle lists; start/covered also reject delayed and asynchronous actions. Hiding the component cancels playback. Closing, navigation, reload and disconnect discard its state. Components need `book.update: resend`, `shaders.animations: true` and a fixed position outside scroll containers.
 
-The bundled **Cinema** app exposes all 18 effects from `examples/cinematics`, each with **REGION** and **FULLSCREEN** buttons across six pages. A stops the current effect; B returns. Launch it from the third launcher page or `/cc open cinema`. Existing installations retain their edited screens: copy the updated `screens/cinema.yml` and `screens/home.yml` from the plugin resources to install this example. See [the smaller two-mode example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/cinematic_components.yml).
+The bundled **Cinema** app exposes all 18 effects from `examples/cinematics`, each with **REGION** and **FULLSCREEN** buttons across six pages. A stops the current effect; B returns. Launch it from the third launcher page or `/cc open cinema`. Existing installations retain their edited screens: copy the updated `screens/cinema.yml` and `screens/home.yml` from the plugin resources to install this example. See [the smaller two-mode example](/examples/cinematic_components.yml).
 
 ## Fullscreen cinematics
 
 `backend: cinematic` displays a noninteractive HUD overlay through Adventure titles. It does not open a book or inventory, change held items, pause gameplay or capture input. It requires `shaders.animations: true`, supported Paper/Folia 1.21.11 through 26.3 and a matching vanilla client with the current pack. Profiles do not resize it: the shader fits the viewport.
 
-Copy [examples/cinematics](https://github.com/Naimadx123/CraftCanvas/tree/master/examples/cinematics) into `plugins/CraftCanvas/screens/cinematics/`, reload and load the pack. Open a preset with `/cc open cinematic_<effect>`, such as `/cc open cinematic_portal`. Presets are supplied for every effect below; use `cinematic_wipe_left` for `wipe-left`, and `cinematic_clip` for `frames`. Transition variants inherit `cinematic_eyes`, so retain that file. Its inherited actions play sounds and teleport the player; change the teleport destination or replace the action lists before using them on your server. The clip uses the bundled wheel artwork as a frame-sequence example.
+Copy [examples/cinematics](/examples/cinematics.zip) into `plugins/CraftCanvas/screens/cinematics/`, reload and load the pack. Open a preset with `/cc open cinematic_<effect>`, such as `/cc open cinematic_portal`. Presets are supplied for every effect below; use `cinematic_wipe_left` for `wipe-left`, and `cinematic_clip` for `frames`. Transition variants inherit `cinematic_eyes`, so retain that file. Its inherited actions play sounds and teleport the player; change the teleport destination or replace the action lists before using them on your server. The clip uses the bundled wheel artwork as a frame-sequence example.
 
 ```yaml
 schema-version: 1

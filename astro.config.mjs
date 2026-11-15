@@ -29,12 +29,19 @@ export default defineConfig({
         {
           label: 'Screen configuration',
           items: [
+            { label: 'Configuration overview', slug: 'configuration/overview' },
+            { label: 'Main configuration', slug: 'configuration/config' },
             { label: 'Components and layout', slug: 'guides/components' },
-            { label: 'YAML reference', slug: 'reference/yaml' },
             { label: 'Variables and formatting', slug: 'configuration/variables' },
             { label: 'Actions', slug: 'configuration/actions' },
             { label: 'Conditions', slug: 'configuration/conditions' },
             { label: 'Themes and templates', slug: 'configuration/reuse' },
+          ],
+        },
+        {
+          label: 'More screen features',
+          collapsed: true,
+          items: [
             { label: 'Local page variants', slug: 'guides/local-variants' },
             { label: 'Screen fonts', slug: 'guides/fonts' },
             { label: 'Animations', slug: 'guides/animations' },
@@ -42,7 +49,7 @@ export default defineConfig({
             { label: 'Inventory workbenches', slug: 'guides/crafting' },
             { label: 'Automatic item models', slug: 'guides/item-icons' },
             { label: 'Interactive UI', slug: 'guides/interactive-ui' },
-            { label: 'Experimental shader hover', slug: 'guides/shader-hover' },
+            { label: 'Button hover', slug: 'guides/shader-hover' },
           ],
         },
         {
@@ -51,13 +58,21 @@ export default defineConfig({
             { label: 'Resource packs', slug: 'resources/resource-pack' },
             { label: 'Integrations', slug: 'resources/integrations' },
             { label: 'Player storage', slug: 'configuration/storage' },
-            { label: 'Renderer limits', slug: 'reference/book-renderer' },
             { label: 'Troubleshooting', slug: 'resources/troubleshooting' },
             { label: 'Upgrading', slug: 'resources/migration' },
           ],
         },
         {
+          label: 'Reference',
+          collapsed: true,
+          items: [
+            { label: 'YAML fields', slug: 'reference/yaml' },
+            { label: 'Renderer limits', slug: 'reference/book-renderer' },
+          ],
+        },
+        {
           label: 'Developer API',
+          collapsed: true,
           items: [
             { label: 'Quick start', slug: 'developers/quick-start' },
             { label: 'API reference', slug: 'developers/api' },
@@ -74,7 +89,6 @@ export default defineConfig({
             { label: 'Addon bundles', slug: 'developers/bundles' },
             { label: 'Reloading', slug: 'developers/reload' },
             { label: 'Events', slug: 'developers/events' },
-            { label: 'Building from source', slug: 'developers/building' },
           ],
         },
       ],

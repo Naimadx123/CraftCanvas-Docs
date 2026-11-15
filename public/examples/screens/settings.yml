@@ -1,0 +1,85 @@
+schema-version: 1
+id: settings
+extends: frame
+title: '<gold>Player settings'
+requires: [toggle, text-input, choice, slider]
+variables:
+  notifications: {type: boolean, scope: player, default: true, persistent: true}
+  display_name: {type: string, scope: player, default: Adventurer, persistent: true}
+  difficulty: {type: string, scope: player, default: normal, persistent: true}
+  volume: {type: number, scope: player, default: 50.0, persistent: true}
+components:
+  heading:
+    text: '<gold>PLAYER SETTINGS'
+  notifications:
+    type: toggle
+    align: center
+    vertical-align: center
+    position: {x: 112, y: 89}
+    size: {width: 288, height: 21}
+    padding: 4
+    layer: 20
+    text: '<white>Notifications'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    tooltip: ['<gray>Click to toggle notifications.']
+    data: {variable: notifications}
+  display_name:
+    type: text-input
+    align: center
+    vertical-align: center
+    position: {x: 112, y: 119}
+    size: {width: 288, height: 21}
+    padding: 4
+    layer: 20
+    text: '<white>Display name'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    tooltip: ['<gray>Open the text field to edit your display name.', '<gray>Save to apply, or Cancel to return.']
+    data: {variable: display_name, max-length: 32, mode: dialog, prompt: '<white>Display name'}
+  difficulty:
+    type: choice
+    align: center
+    vertical-align: center
+    position: {x: 112, y: 148}
+    size: {width: 288, height: 21}
+    padding: 4
+    layer: 20
+    text: '<white>Difficulty'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    tooltip: ['<gray>Click to cycle through the available options.']
+    data: {variable: difficulty, options: [easy, normal, hard]}
+  volume:
+    type: slider
+    position: {x: 112, y: 178}
+    size: {width: 288, height: 36}
+    padding: 3
+    layer: 20
+    text: '<white>Volume'
+    slider:
+      track: {provider: native, kind: image, id: 'craftcanvas:slider_track'}
+      fill: {provider: native, kind: image, id: 'craftcanvas:slider_fill'}
+      thumb: {provider: native, kind: image, id: 'craftcanvas:slider_thumb'}
+    tooltip: ['<gray>Click a position to set the value.', '<gray>Values range from 0 to 100 in steps of five.']
+    click-sound: minecraft:ui.button.click
+    data: {variable: volume, min: 0, max: 100, step: 5}
+  save:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 293, y: 216}
+    size: {width: 107, height: 20}
+    padding: 4
+    layer: 20
+    text: '<green>Save settings'
+    tooltip: ['<white>Save settings']
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    actions:
+      click:
+        - {type: message, text: '{lang.saved} Name: {player.display_name}'}
+        - {ref: close}
+  console_a:
+    actions:
+      click:
+      - {type: message, text: '{lang.saved} Name: {player.display_name}'}
+      - {ref: close}
+    tooltip:
+    - <white>A / Save

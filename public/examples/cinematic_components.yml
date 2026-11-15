@@ -1,0 +1,63 @@
+schema-version: 1
+id: cinematic_components
+extends: frame
+title: '<aqua>Cinematic components'
+layout: {overlap: allow}
+session: {timeout-ticks: 0}
+components:
+  heading:
+    text: '<aqua><bold>CINEMATIC COMPONENTS'
+  region_effect:
+    type: cinematic
+    position: {x: 94, y: 50}
+    size: {width: 320, height: 206}
+    layer: 500
+    cinematic:
+      effect: portal
+      display: region
+      close-ticks: 24
+      hold-ticks: 20
+      open-ticks: 24
+      accent-color: '#67DFFF'
+  fullscreen_effect:
+    type: cinematic
+    layer: 500
+    cinematic:
+      effect: portal
+      display: fullscreen
+      close-ticks: 24
+      hold-ticks: 20
+      open-ticks: 24
+      accent-color: '#67DFFF'
+  play_region:
+    type: button
+    position: {x: 112, y: 104}
+    size: {width: 136, height: 24}
+    layer: 20
+    align: center
+    vertical-align: center
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    text: '<aqua>REGION'
+    actions:
+      click:
+        - {type: stop-cinematic, target: fullscreen_effect}
+        - {type: play-cinematic, target: region_effect}
+  play_fullscreen:
+    type: button
+    position: {x: 264, y: 104}
+    size: {width: 136, height: 24}
+    layer: 20
+    align: center
+    vertical-align: center
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    text: '<aqua>FULLSCREEN'
+    actions:
+      click:
+        - {type: stop-cinematic, target: region_effect}
+        - {type: play-cinematic, target: fullscreen_effect}
+  console_a:
+    tooltip: ['<white>A / Stop']
+    actions:
+      click:
+        - {type: stop-cinematic, target: region_effect}
+        - {type: stop-cinematic, target: fullscreen_effect}

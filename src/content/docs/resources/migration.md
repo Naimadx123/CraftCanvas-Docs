@@ -42,7 +42,7 @@ The startup animation runs once per screen/player connection. Reconnect to repla
 
 To add the wheel to an existing installation, copy `screens/reward_wheel.yml` and retain its parent `frame`. Its resources are `actions/wheel_spin.yml`, `actions/wheel_reward.yml`, `assets/wheel.yml`, the 48 wheel PNGs and pointer PNG. Missing bundled non-screen files are installed normally. Reload, load the rebuilt pack and run `/cc open reward_wheel`.
 
-For a reusable animation without reward logic, copy [examples/animation.yml](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/animation.yml). It uses existing UI artwork. Follow the [animation guide](/guides/animations/) to replace its frames with your own.
+For a reusable animation without reward logic, copy [examples/animation.yml](/examples/animation.yml). It uses existing UI artwork. Follow the [animation guide](/guides/animations/) to replace its frames with your own.
 
 ## Code-defined screens and pack location
 

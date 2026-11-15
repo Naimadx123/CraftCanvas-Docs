@@ -2,13 +2,13 @@
 title: "CraftCanvas documentation"
 ---
 
-Build graphical menus with signed books, text components and resource-pack glyphs. Screens, artwork, navigation, state and server actions are configured in YAML.
+Create graphical Minecraft menus with text, artwork and clickable buttons. Edit YAML files to choose what players see and what happens when they click. Players load a resource pack; they do not need a client mod.
 
 ## For server administrators
 
 1. [Install CraftCanvas](/start/installation/) and configure one resource-pack sender.
-2. [1st steps: assets and your first screen](/getting-started/first-screen/).
-3. Add [graphics and sounds](/resources/resource-pack/), [controls](/guides/components/), [actions](/configuration/actions/) and [conditions](/configuration/conditions/).
+2. [Make your first screen with the supplied artwork](/getting-started/first-screen/).
+3. Use the [configuration overview](/configuration/overview/) to find the right file, then add [graphics and sounds](/resources/resource-pack/), [controls](/guides/components/), [actions](/configuration/actions/) and [conditions](/configuration/conditions/).
 4. Reuse [themes and templates](/configuration/reuse/), or add [animations](/guides/animations/).
 
 | Task | Guide |
@@ -39,6 +39,5 @@ Start with the [developer quick start](/developers/quick-start/), then use the [
 | Install YAML and artwork from your addon JAR | [Addon bundles](/developers/bundles/) |
 | Compile configuration and observe the result | [Reloading](/developers/reload/) |
 | Listen for opening, closing and selection | [Events](/developers/events/) |
-| Build CraftCanvas or publish its API | [Building from source](/developers/building/) |
 
 The examples use schema 1 and the shipped `frame` screen. Whole-file examples can be copied directly; component and action fragments state where they belong. Matching vanilla clients are required. Review [renderer limits](/reference/book-renderer/) when designing layouts.

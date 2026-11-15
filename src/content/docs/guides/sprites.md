@@ -72,7 +72,7 @@ Tags must be present in trusted screen definitions, actions or language entries 
 
 ## Try the complete example
 
-Run `/cc open sprites` on a fresh installation. It shows six reward icons, item and text tooltips, clickable sprites and inline item/block icons. The home screen includes a link to it. On an existing installation copy [screens/sprites.yml](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/sprites.yml) from the new JAR or source distribution into your screens directory and run `/cc reload`. Existing example screens are not automatically rewritten. Copy the updated `reward_wheel.yml` separately if you want its new result preview.
+Run `/cc open sprites` on a fresh installation. It shows six reward icons, item and text tooltips, clickable sprites and inline item/block icons. The home screen includes a link to it. On an existing installation copy [screens/sprites.yml](/examples/screens/sprites.yml) from the new JAR or source distribution into your screens directory and run `/cc reload`. Existing example screens are not automatically rewritten. Copy the updated `reward_wheel.yml` separately if you want its new result preview.
 
 The catalog verifies source texture metrics. A different client pack that removes or changes those textures' padding/dimensions can change the font advance or show a missing texture. Use matching vanilla clients and check your merged pack in game, including manual profiles, hitboxes and tooltips.
 

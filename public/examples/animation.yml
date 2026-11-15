@@ -1,0 +1,46 @@
+schema-version: 1
+id: animation
+extends: frame
+title: '<gold>Animation'
+requires: [frame-animation]
+book:
+  update: resend
+variables:
+  animation_frame: {type: string, default: dim}
+components:
+  heading:
+    text: '<gold>COLOR PULSE'
+  preview:
+    type: image
+    position: {x: 191, y: 99}
+    size: {width: 130, height: 68}
+    layer: 20
+    asset-select:
+      variable: animation_frame
+      options:
+        dim: {provider: native, kind: image, id: 'craftcanvas:slider_track'}
+        rise: {provider: native, kind: image, id: 'craftcanvas:slider_fill'}
+        peak: {provider: native, kind: image, id: 'craftcanvas:slider_thumb'}
+        fall: {provider: native, kind: image, id: 'craftcanvas:slider_fill'}
+  play:
+    type: button
+    vertical-align: center
+    position: {x: 202, y: 200}
+    size: {width: 109, height: 23}
+    padding: 4
+    layer: 20
+    align: center
+    text: '<gold>PLAY'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    tooltip: ['<white>Play the animation.']
+    states:
+      loading:
+        text: '<gray>PLAYING'
+    actions:
+      click:
+        - type: animate
+          variable: animation_frame
+          frames: [dim, rise, peak, fall]
+          cycles: 3
+          interval-ticks: 6
+          stop-at: dim

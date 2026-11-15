@@ -4,7 +4,7 @@ title: "Scrolling, search, component motion and notifications"
 
 These four features work with `shaders.hover: false` and `shaders.animations: false`. They use the normal resource pack and `book.update: resend`. With `shaders.animations: true`, supported component motion runs smoothly on the client; scrolling, search and notification lifetime remain server state. Enabling only `shaders.hover` does not enable motion shaders.
 
-Copy [interactive_ui.yml](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/interactive_ui.yml) into `plugins/CraftCanvas/screens/`, keep the bundled `frame` screen and its assets, run `/cc reload`, load the new pack, then run `/cc open interactive_ui`. New positions and motion sizes are compiled into the pack; adding or changing them requires a rebuilt pack.
+Copy [interactive_ui.yml](/examples/interactive_ui.yml) into `plugins/CraftCanvas/screens/`, keep the bundled `frame` screen and its assets, run `/cc reload`, load the new pack, then run `/cc open interactive_ui`. New positions and motion sizes are compiled into the pack; adding or changing them requires a rebuilt pack.
 
 ## Scroll containers
 

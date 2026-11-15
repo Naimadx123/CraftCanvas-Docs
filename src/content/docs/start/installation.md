@@ -1,37 +1,75 @@
 ---
-title: "Installation"
+title: Installation
+description: Install the JAR, send the resource pack and open the example launcher.
 ---
 
-Use Paper or Folia 1.21.11 through 26.3 with a matching vanilla client. CraftCanvas accepts the exact releases 1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 and 26.3; it rejects snapshots, prereleases and versions outside that list. Paper did not publish a 26.1 server release; use stable Paper 26.1.2 for that release family. Do not assume compatibility through ViaVersion.
+Use the CraftCanvas JAR supplied for your release or beta. Players need the generated resource pack and a supported vanilla client; they do not need a client mod.
 
-| Minecraft version | Server Java | Resource-pack format |
-| --- | --- | --- |
-| 1.21.11 | 21+ | 75.0 |
-| 26.1.x | 25+ | 84.0 |
-| 26.2 | 25+ | 88.0 |
-| 26.3 | 25+ | 97.1 |
+## Requirements
 
-The same JAR keeps Java 21 bytecode and compiles against the oldest supported Paper API. The generated pack declares format 75.0 through 97.1. `plugin.yml` retains `api-version: '1.21.11'` as the minimum API version. This is not an upper-version restriction. `/cc info` reports the detected server, Java version and resource-pack format. Check your layouts at the GUI scales used by your players.
+| Server family | Java |
+| --- | --- |
+| Paper or Folia 1.21.11 | 21 or newer |
+| Paper or Folia 26.1.2, 26.2 or 26.3 | 25 or newer |
 
-Copy the built CraftCanvas JAR into `plugins/` and restart. Startup preparation runs asynchronously; wait for CraftCanvas to report ready. The data directory contains `config.yml`, `storage.yml`, `craftcanvas.zip`, `screens/`, `themes/`, `templates/`, `assets/`, `actions/`, `languages/` and internal files under `.data/`, including `generated-pack/`. Player variables use SQLite in `.data/data.db` by default; `storage.yml` also supports MySQL, MariaDB and PostgreSQL. See [storage configuration](/configuration/storage/).
+Use a matching supported client. The supported releases are 1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 and 26.3. Snapshots, prereleases and versions outside that list are rejected. Paper did not publish a 26.1 server release; use Paper 26.1.2 for that family. ViaVersion alone does not guarantee compatible rendering.
 
-Internal records use the hidden `.data/` directory (dot prefix plus the Windows hidden attribute where supported). An existing `data/` directory is renamed with its contents preserved. If both names exist, reconcile them before starting the plugin. This directory rename does not import legacy player JSON into SQL.
+## 1. Install the plugin
 
-Startup and `/cc reload` synchronize bundled YAML files outside `screens/`: missing keys are added recursively while existing values, lists, custom keys and comments are preserved. Missing non-screen files are installed; existing binary assets are not replaced. The server log lists files receiving new fields. YAML formatting can be normalized when a file needs new keys; unchanged files are not rewritten. Invalid YAML is reported without replacing it with defaults.
+1. Put the JAR in the server's `plugins/` folder.
+2. Restart the server and wait for CraftCanvas to finish preparing its files and pack.
+3. Check that `plugins/CraftCanvas/config.yml` and `craftcanvas.zip` exist.
 
-Example screens are copied only on the first installation into an empty data directory. `.data/defaults-installed` records initialization. Existing installations, including older versions without this marker, do not receive new example screens automatically. Files under `screens/` are never merged or updated, and deleting a screen or the entire directory does not restore examples on reload/restart. An empty `screens/` directory may be recreated and is a valid configuration; the plugin stays enabled with zero screens. To restore an example, copy it manually from the JAR or project sources and adjust references from other screens/templates/actions when removing it.
+The first start also creates example screens, artwork and other [configuration files](/configuration/overview/). SQLite stores player preferences by default, so a separate database is optional.
 
-With enabled Nexo and the default `pack.nexo-auto-export: true`, CraftCanvas places its ZIP in `plugins/Nexo/pack/external_packs/craftcanvas.zip` and requests a Nexo rebuild on startup and changed resource builds. Configure Nexo's pack generation/hosting and accept its combined pack. No separate CraftCanvas URL or manual pack UUID is needed.
+## 2. Send the pack
 
-Without automatic Nexo handling, follow the [resource-pack guide](/resources/resource-pack/#standalone-workflow). Host `plugins/CraftCanvas/craftcanvas.zip`, set `pack.sender: craftcanvas` and a direct HTTP(S) `pack.url`, and leave `pack.sha1` empty. Run `/cc reload` and accept the pack. The shipped `pack.sender: external` observes another sender and does not send a ZIP itself. Its `pack.id` must match that sender's actual UUID. An empty URL in CraftCanvas sender mode is reported immediately instead of leaving the opening queued. Otherwise, `pack.missing: wait` queues the screen until the expected pack loads. A manually enabled local client pack does not acknowledge a server download.
+### With Nexo
 
-Start with `/cc open home` to browse the two-page handheld app launcher. Its startup animation and sound play once per connection; reconnect to replay them. Hover and animation shaders are enabled in the shipped configuration, and `pack.hide-vanilla-book: true` hides the underlying vanilla book PNG. The wheel gives a real item with a shared 60-second player cooldown for SPIN and A. See [button cooldowns](/guides/components/#button-cooldowns) before changing reward eligibility. Use `selection` for generic option buttons and confirmation, `catalog` for pagination and permissions, and `settings` for persistent preferences. `classes` is an optional RPG showcase; `simple` and `variants` demonstrate its icon selection and local page switching. `providers` and `provider_nexo`, `provider_craftengine`, `provider_itemsadder` demonstrate optional item tooltips with vanilla fallbacks. `frame` is a reusable base screen.
+Keep `pack.nexo-auto-export: true` in CraftCanvas. Configure pack generation, hosting and sending in Nexo as usual.
+
+CraftCanvas exports its graphics into `plugins/Nexo/pack/external_packs/craftcanvas.zip`. Nexo builds and sends the combined pack. Wait for its rebuild and upload to finish, then accept the updated pack. You do not need to copy a CraftCanvas URL or UUID into the automatic Nexo setup.
+
+### Without Nexo
+
+Host `plugins/CraftCanvas/craftcanvas.zip` at a direct download URL, then edit the existing `pack` section:
+
+```yaml title="config.yml"
+pack:
+  sender: craftcanvas
+  url: 'https://example.com/craftcanvas.zip'
+  sha1: ''
+```
+
+Replace the URL with your own. Keep the other pack fields and run `/cc reload`. Players must accept this pack before menus can open.
+
+If another plugin sends a combined pack, follow [external workflows](/resources/resource-pack/#external-workflows). CraftCanvas creates the ZIP but does not host it. All three delivery options are explained under [resource packs](/resources/resource-pack/).
+
+## 3. Open the launcher
+
+As an operator, run:
+
+```text
+/cc info
+/cc open home
+```
+
+You should see the handheld console with three pages of apps. Try settings, the wheel and Cinema. The wheel grants a real item and has a shared 60-second cooldown on SPIN and A.
+
+The startup animation and sound play once per connection; reconnect to replay them. Hover and animation shaders are enabled in the shipped configuration. `pack.hide-vanilla-book: true` hides the underlying vanilla book background while the pack is loaded, including for ordinary books.
+
+If a menu stays queued, use `/cc debug <player>` to check pack status. A locally selected pack does not confirm that the expected server pack was downloaded. See [troubleshooting](/resources/troubleshooting/).
+
+## Keeping your configuration
+
+Startup and `/cc reload` add missing keys to bundled YAML files outside `screens/`, keeping existing values, lists, comments and custom keys. Missing non-screen files are installed; existing PNGs are kept.
+
+Example screens are installed only into a fresh empty setup. Removed screens stay removed, and an update does not replace your screens or install new examples into an existing setup. Copy an example yourself when you want to add it.
+
+Keep `.data/` in backups along with your configuration and artwork. It holds saved player data and internal resource records. See [updating an existing setup](/resources/migration/) and [player storage](/configuration/storage/).
 
 ## Folia
 
-The same JAR declares `folia-supported: true` and selects an entity/global scheduler adapter. Session polling, rendering, inventory access, clicks, text input and delayed actions execute on the player's owning entity thread and follow entity migration. Startup, configuration publication, resource invalidation, Nexo pack coordination and console commands use the global scheduler. Filesystem preparation stays on the dedicated file executor.
+Use Folia-compatible versions of your optional plugins and addons too. CraftCanvas schedules player work on the player's region and shared work on the global scheduler. Addon authors can use the helpers in the [developer quick start](/developers/quick-start/).
 
-
-Optional plugins and addons must also support Folia. Player API operations belong on the owning entity region; registration belongs on the global region. The [developer quick start](/developers/quick-start/) shows the scheduling helpers.
-
-Continue with [1st steps: assets and your first screen](/getting-started/first-screen/), [commands](/start/commands/), or [troubleshooting](/resources/troubleshooting/).
+Next, [make your first screen](/getting-started/first-screen/) or read the [configuration overview](/configuration/overview/).

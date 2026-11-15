@@ -1,0 +1,243 @@
+schema-version: 1
+id: classes
+title: <gold>Class selection
+theme: rpg_dark
+requires:
+- glyph-rendering
+- absolute-layout
+- component-click
+- component-tooltip
+- selection
+- no-blur
+variables:
+  selected_class: {type: string, default: archer}
+  power: {type: integer, default: 70}
+components:
+  heading: {text: <aqua><bold>CLASS QUEST}
+  tabs:
+    type: tabs
+    position: {x: 216, y: 80}
+    size: {width: 184, height: 24}
+    layer: 20
+    children:
+      overview_tab:
+        type: button
+        size: {width: 88, height: 24}
+        padding: 4
+        align: center
+        vertical-align: center
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        text: <gray>Overview
+        tooltip: ['<white>Class overview']
+        states:
+          selected:
+            when:
+              session: {name: tab, value: ''}
+            text: <gold><bold>Overview
+        actions:
+          click:
+          - {type: tab, value: ''}
+      skills_tab:
+        type: button
+        position: {x: 96, y: 0}
+        size: {width: 88, height: 24}
+        padding: 4
+        align: center
+        vertical-align: center
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        text: <gray>Skills
+        tooltip: ['<white>Selected class skill']
+        states:
+          selected:
+            when:
+              session: {name: tab, value: abilities}
+            text: <gold><bold>Skills
+        actions:
+          click:
+          - {type: tab, value: abilities}
+  portrait_archer:
+    type: image
+    position: {x: 104, y: 84}
+    size: {width: 96, height: 120}
+    layer: 11
+    color: '#FFFFFF'
+    asset: {provider: native, kind: image, id: 'craftcanvas:archer_portrait'}
+    conditions:
+      visible:
+        variable-equals: {name: selected_class, value: archer}
+  portrait_mage:
+    type: image
+    position: {x: 104, y: 84}
+    size: {width: 96, height: 120}
+    layer: 11
+    color: '#FFFFFF'
+    asset: {provider: native, kind: image, id: 'craftcanvas:mage_portrait'}
+    conditions:
+      visible:
+        variable-equals: {name: selected_class, value: mage}
+  portrait_warrior:
+    type: image
+    position: {x: 104, y: 84}
+    size: {width: 96, height: 120}
+    layer: 11
+    color: '#FFFFFF'
+    asset: {provider: native, kind: image, id: 'craftcanvas:warrior_portrait'}
+    conditions:
+      visible:
+        variable-equals: {name: selected_class, value: warrior}
+  class_title:
+    type: text
+    position: {x: 216, y: 110}
+    size: {width: 184, height: 12}
+    layer: 20
+    text: <gold><bold>{session.selected_class}
+  details:
+    type: skill-card
+    position: {x: 216, y: 126}
+    size: {width: 184, height: 68}
+    layer: 20
+    data: {tab: ''}
+    children:
+      description:
+        type: text
+        size: {width: 184, height: 30}
+        text: <gray>Precision, mobility and survival.
+        overflow: wrap
+        states:
+          selected:
+            when:
+              variable-equals: {name: selected_class, value: mage}
+            text: <gray>Arcane power and elemental spells.
+          locked:
+            when:
+              variable-equals: {name: selected_class, value: warrior}
+            text: <gray>Strength, resilience and close combat.
+      selected_skill:
+        type: image
+        position: {x: 0, y: 36}
+        size: {width: 28, height: 28}
+        asset-select:
+          variable: selected_class
+          options:
+            archer: {provider: native, kind: image, id: 'craftcanvas:archer'}
+            mage: {provider: native, kind: image, id: 'craftcanvas:mage'}
+            warrior: {provider: native, kind: image, id: 'craftcanvas:warrior'}
+  stats:
+    type: stat
+    position: {x: 216, y: 240}
+    size: {width: 184, height: 12}
+    layer: 20
+    text: '<gray>POWER '
+    data: {value: '{session.power}', max: 100, segments: 20}
+  abilities:
+    type: skill-card
+    position: {x: 216, y: 126}
+    size: {width: 184, height: 68}
+    layer: 20
+    data: {tab: abilities}
+    children:
+      skill_icon:
+        type: image
+        position: {x: 0, y: 2}
+        size: {width: 32, height: 32}
+        asset-select:
+          variable: selected_class
+          options:
+            archer: {provider: native, kind: image, id: 'craftcanvas:archer'}
+            mage: {provider: native, kind: image, id: 'craftcanvas:mage'}
+            warrior: {provider: native, kind: image, id: 'craftcanvas:warrior'}
+      skill_name:
+        type: text
+        position: {x: 42, y: 4}
+        size: {width: 142, height: 12}
+        text: <gold>Precision strike
+        states:
+          selected:
+            when:
+              variable-equals: {name: selected_class, value: mage}
+            text: <gold>Elemental burst
+          locked:
+            when:
+              variable-equals: {name: selected_class, value: warrior}
+            text: <gold>Iron resolve
+      skill_description:
+        type: text
+        position: {x: 0, y: 42}
+        size: {width: 184, height: 26}
+        overflow: wrap
+        text: <gray>A focused shot at one target.
+        states:
+          selected:
+            when:
+              variable-equals: {name: selected_class, value: mage}
+            text: <gray>Control nearby foes with magic.
+          locked:
+            when:
+              variable-equals: {name: selected_class, value: warrior}
+            text: <gray>Resist incoming damage briefly.
+        tooltip:
+        - <gray>Demonstration skill description.
+        - <gray>Connect your RPG addon to implement it.
+  selection:
+    type: text
+    position: {x: 104, y: 208}
+    size: {width: 108, height: 12}
+    layer: 20
+    text: '<gray>Selected: <white>{session.selected_class}'
+  archer:
+    template: class_icon
+    parameters: {class: archer, label: Archer, x: 224}
+    actions:
+      click:
+      - {type: set-variable, name: selected_class, value: archer}
+      - {type: set-variable, name: power, value: 70}
+      - {type: select, value: archer}
+  mage:
+    template: class_icon
+    parameters: {class: mage, label: Mage, x: 268}
+    actions:
+      click:
+      - {type: set-variable, name: selected_class, value: mage}
+      - {type: set-variable, name: power, value: 90}
+      - {type: select, value: mage}
+  warrior:
+    template: class_icon
+    parameters: {class: warrior, label: Warrior, x: 312}
+    actions:
+      click:
+      - {type: set-variable, name: selected_class, value: warrior}
+      - {type: set-variable, name: power, value: 80}
+      - {type: select, value: warrior}
+  confirm:
+    type: confirmation
+    vertical-align: center
+    position: {x: 104, y: 226}
+    size: {width: 96, height: 20}
+    layer: 30
+    text: <green>CONFIRM
+    align: center
+    padding: 4
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    cooldown-ticks: 20
+    tooltip:
+    - <gray>Confirm your current selection.
+    actions:
+      click:
+      - type: confirm
+        title: <gold>Choose your class
+        text: <gray>Continue as <white>{session.selected_class}<gray>?
+        on-confirm:
+        - {type: message, text: '<green>You selected {session.selected_class}.'}
+        - {ref: close}
+  console_a:
+    tooltip:
+    - <white>A / Confirm class
+    actions:
+      click:
+      - type: confirm
+        title: <gold>Choose your class
+        text: <gray>Continue as <white>{session.selected_class}<gray>?
+        on-confirm:
+        - {type: message, text: '<green>You selected {session.selected_class}.'}
+        - {ref: close}
+extends: frame

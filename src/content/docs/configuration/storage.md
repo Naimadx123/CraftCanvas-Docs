@@ -2,7 +2,7 @@
 title: "Player storage"
 ---
 
-CraftCanvas uses a separate `storage.yml`, HikariCP connection pools and SQL backends. Paper loads the JDBC libraries declared in the plugin metadata.
+You only need to edit `plugins/CraftCanvas/storage.yml` if you want to change where player data is saved. A fresh install uses SQLite and works without a separate database server.
 
 SQLite is the default and stores player variables in `plugins/CraftCanvas/.data/data.db`. No database server is required. MySQL and MariaDB use the MySQL JDBC driver; PostgreSQL accepts either `postgres` or `postgresql` as its type.
 
@@ -23,11 +23,11 @@ For an external database, create the database and configure credentials with per
 
 Storage settings take effect after a server restart. `/cc reload` synchronizes missing default fields in `storage.yml` but keeps the active storage connection. Changing the backend, database or table prefix selects a different dataset; it does not copy data between SQL databases.
 
-## Loading and saving
+## What gets saved
 
 Variables with `scope: player` and `persistent: true` are saved when `persistent-player-data` is enabled in `config.yml`. Active button-cooldown deadlines are also included in that player snapshot under internal keys; they do not need variable declarations. This lets cooldowns survive reconnects and restarts. Session and global variables and display profiles are not persisted.
 
-Startup loads players already online; subsequent players load during asynchronous pre-login. The cache is removed on disconnect after sessions save their state. A failed login-time read rejects login rather than replacing existing data with defaults. SQL initialization, reads and writes use the file executor, outside the player's owning thread.
+Startup loads players already online; subsequent players load during asynchronous pre-login. The cache is removed on disconnect after sessions save their state. A failed login-time read rejects login rather than replacing existing data with defaults. Database work runs in the background.
 
 Pending snapshots for the same player are merged. `queue-size` limits the number of players waiting for a write; a full queue rejects new entries and logs the loss. Failed writes are logged and retained for a subsequent flush or shutdown. Shutdown queues a final flush before closing the pool. A prolonged database outage can still prevent successful persistence; check severe log entries.
 

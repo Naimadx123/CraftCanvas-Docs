@@ -1,22 +1,17 @@
 ---
-title: "YAML reference"
+title: YAML reference
+description: Field names, types, defaults and limits for CraftCanvas configuration files.
 ---
 
-Use this page to look up field types, defaults and renderer limits. For a complete menu, start with [1st steps: assets and your first screen](/getting-started/first-screen/). Practical guides cover [components](/guides/components/), [actions](/configuration/actions/), [conditions](/configuration/conditions/), [variables](/configuration/variables/) and [reusable definitions](/configuration/reuse/).
+Use this page to look up an exact field, default or limit. For a guided start, use [configuration overview](/configuration/overview/) and [your first screen](/getting-started/first-screen/).
 
-Screen files live recursively under `screens/`. Registries also load `themes/`, `templates/`, `actions/`, `assets/` and `languages/`. Loading is sorted and rejects paths outside the data directory, duplicate keys and YAML collection aliases. Definitions are immutable and shared; state belongs to the player's session. Strict mode rejects unknown fields. Invalid values and unsupported features fail even when strict mode is off. Errors identify file, screen, component and field. Failed reloads retain the previous valid configuration.
-
-At startup, an invalid screen is skipped while valid screens remain available. The console reports each rejected screen; `/cc inspect <screen>` shows its recorded error. For inherited settings, the diagnostic names the affected child, the file containing the invalid value and `inherited-from=<parent ID>`. A child that replaces an invalid parent setting with a valid value can still load. Duplicate IDs reject all definitions with that ID. Errors in shared registries, global configuration or shared pack resources can still prevent startup. Reloads remain atomic: any error rejects the reload and preserves the running configuration and sessions.
-
-Bundled YAML files outside `screens/` gain missing default keys on startup and reload. Maps are traversed recursively; existing scalar values, explicit nulls and complete lists are preserved, along with comments and custom keys. Defaults do not overwrite a scalar/list with a map. This synchronization applies only to paths listed in the JAR's `defaults.index`, not arbitrary user files. Screen files are excluded: examples are seeded once into a fresh empty data directory, and neither removed screens nor new release examples are installed into an existing setup. See [installation behavior](/start/installation/).
-
-All geometry uses integer GUI units, not desktop pixels. The client applies GUI Scale. Profiles are chosen manually; the server cannot query display resolution. Use the shipped `frame` screen as an inherited base. Start with `/cc open home` to browse examples; `selection` demonstrates application-defined option values. `classes`, `simple` and the class-based local-page demo are optional examples. [The annotated example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/annotated.yml) can be copied into `screens/`.
+The Default columns describe what the parser uses when a field is omitted. A shipped example can explicitly choose another value; [main configuration](/configuration/config/) shows the settings in a fresh `config.yml`.
 
 ## General screen examples
 
 A screen is defined entirely by its YAML ID, geometry, components, variables, conditions and actions. Screen state is defined by your own variables and callbacks. Artwork and themes are configurable resources.
 
-- `home`: two-page handheld app launcher, configurable greeting, and a startup animation/sound on the first successful opening per connection.
+- `home`: three-page handheld app launcher, configurable greeting, and a startup animation/sound on the first successful opening per connection.
 - `selection`: generic option selection, selected appearance, confirmation and back navigation.
 - `settings`: persistent player settings and supported input controls.
 - `reward_wheel`: 48-frame animation, six server-selected rewards, and a shared 60-second player cooldown for SPIN and the console A button.
@@ -209,7 +204,7 @@ This is a component fragment; retain the screen's background and close control. 
 
 The `animate` action advances a session string variable through an administrator-defined list of frame IDs. Bind an image's `asset-select.variable` to it and map each ID to a registered graphic. Multiple components can follow the same variable; a text component can also display it with a placeholder. Use your own PNG sequences for opening graphics, changing portraits, blinking icons or other frame-based effects. Geometry remains fixed; movement must be drawn into the frames.
 
-The complete [color-pulse example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/animation.yml) uses existing UI assets. Copy it to `plugins/CraftCanvas/screens/animation.yml`, retain the bundled `frame` screen and UI assets, reload, let the updated pack load, then run `/cc open animation`. Its Play button can be used again after playback. Replace its selector entries with your own manifest-registered PNGs to use different artwork.
+The complete [color-pulse example](/examples/animation.yml) uses existing UI assets. Copy it to `plugins/CraftCanvas/screens/animation.yml`, retain the bundled `frame` screen and UI assets, reload, let the updated pack load, then run `/cc open animation`. Its Play button can be used again after playback. Replace its selector entries with your own manifest-registered PNGs to use different artwork.
 
 The minimal action is:
 
@@ -349,3 +344,72 @@ Metrics fields: width 1..1024 (default 16), height 1..768 (default 16), ascent -
 Manifest fields: schema-version, images, sounds. Image entries contain file, width and height (defaults 16, bounds 1..2048); actual PNG dimensions must match. Sound entries contain an OGG file. Paths remain inside assets/ and native IDs use `craftcanvas:`. A native sprite is a static local PNG. A vanilla sprite references a registered client texture, for example `{provider: vanilla, kind: sprite, id: 'minecraft:item/diamond'}`; square size 1..128 in every profile, no font/character/metrics overrides or local PNG required. Items appear in tooltip-item or item actions; arbitrary item models are not automatically converted into bitmaps.
 
 Built-in fonts are craftcanvas:canvas, craftcanvas:space and generated craftcanvas:text/y<row>. Screen fonts supply measured body metrics; internal positioned font names are generated automatically. See [PACK.md](/resources/resource-pack/) for adding graphics, preserving allocation registries, generating ZIPs and selecting one sender.
+
+## Action fields
+
+These entries go under `actions.click`, or another supported action list. See [actions](/configuration/actions/) for examples.
+
+| Type | Fields besides type/condition | Defaults and behavior |
+| --- | --- | --- |
+| open | `screen` string | Open a known permitted screen; cancel the old session's work |
+| close | none | Close/invalidate active session |
+| back | none | Restore previous navigation frame, or close if none |
+| refresh | none | Mark the session dirty |
+| select | `value` string | Set persistent session selection; emit selection event |
+| tab | `value` string | Set tab and reset page to zero |
+| page | `value` | next, previous, or integer `0..10000`; clamps navigation |
+| set-variable | `name` string, `value` typed scalar or exact variable placeholder | Validate declared scope/type |
+| increment-variable | `name` string, numeric `value` | Finite numeric addition; integral amount for integer variables; overflow fails |
+| reset-variable | `name` string | Restore declared default |
+| random-variable | `name` session string variable, `values` string list | Uniform server-side choice from 2..128 distinct nonempty literals, at most 128 characters each; no client-selected outcome |
+| animate | `variable`, `frames`; optional `cycles`, `interval-ticks`, `slowdown-ticks`, `stop-at` | Finite playback: client texture atlas with `shaders.animations` enabled, book resends otherwise; see [animations](/guides/animations/) |
+| scroll | `target` scroll component ID, signed integer `rows` | -128..128 except zero; clamp a player's row offset; no wheel events |
+| animate-component | `target` component ID | Replay its configured movement/box-scale animation; finite book updates with or without shaders |
+| play-cinematic | `target` component ID | Start/restart a visible cinematic component without replacing its book |
+| stop-cinematic | `target` component ID | Stop a component effect; stopping an inactive target is accepted |
+| notify | `target` notification component ID, `text`; optional `duration-ticks` | Replace that player's message; duration 1..1200, default 60; text up to 2048 characters |
+| dismiss-notification | `target` notification component ID | Remove its message and motion early |
+| message | `text` string | Chat message |
+| actionbar | `text` string | Native actionbar |
+| title | `text` string, optional `subtitle` string | Subtitle defaults empty; native default timing |
+| sound | exactly one of `id` string / `asset` sound reference; optional `volume`, `pitch` | Both numeric values default to 1; nonnegative finite |
+| player-command | `command` string | Dispatch as the player |
+| console-command | `command` string | Dispatch as console; administrator-authored only |
+| give-item | `asset` item reference, `amount` integer | `1..2304`; cloned stacks; reject and restore storage on insufficient space |
+| take-item | `asset` item reference, `amount` integer | `1..2304`; require sufficient matching storage inventory first |
+| exchange-items | required `inputs` and `outputs` item-entry lists | Each list has 1..64 entries with item `asset` and optional integer `amount` (default 1, range 1..2304); commit only when all costs and outputs fit |
+| workbench-clear | none | Cancel reserved slots and Hand; requires a workbench screen |
+| workbench-craft | none | Craft one permitted matching recipe; requires an empty Hand |
+| charge | `amount` positive finite number | Single Vault withdrawal; no implied reward transaction |
+| refund | `amount` positive finite number | Single Vault deposit |
+| purchase | `amount` positive finite number, `actions` list | Immediate guarded reward transaction, described below |
+| confirm | optional `title`, `text`; required `on-confirm` list | Signed-book modal. Defaults Confirm/Continue?; cancel returns to source |
+| input | `name` declared string variable; optional `max-length`, `prompt`, `mode` | Prefilled native text dialog by default; mode dialog/chat; maximum 1..256 UTF-16 code units (default 128); cancel leaves value unchanged |
+| local-page | `value` variant ID | Sole direct click action; switches precompiled native pages locally |
+| sequence | `actions` list | Nested sequential execution |
+| delay | `ticks` integer, `actions` list | `1..72000`; one session-owned scheduled task |
+| branch | `when` condition, `actions`, optional `otherwise` list | Execute selected branch; otherwise defaults empty |
+| callback | `id` string, optional `data` map | Execute an API-registered action; data defaults empty |
+| async-callback | `id`, optional `data`, optional `timeout-ticks` | Await an addon stage; timeout defaults to 200, range 1..1200 ticks. See [async callbacks](/developers/async-actions/) |
+
+## Action execution
+
+
+Book clients activate an opaque key registered for their current owner/session/screen/component/render revision. No client-supplied command, cost, permission, reward or action body is trusted. A token is consumed once; foreign, old-screen, old-revision and repeated tokens are rejected. Availability and execution checks run before dispatch, and again after input submission. `cooldown-ticks` is a short per-component/session debounce. The optional [button cooldown](/guides/components/#button-cooldowns) uses player deadlines, shared keys and persistent storage when enabled. A busy lock still guards the action sequence. Confirmation replaces the prior token set and checks authorization again.
+
+`purchase` permits immediate give-item, callback, set-variable, select, message, notify and sound rewards. It excludes commands, delays, async callbacks and nested transactions. The engine snapshots player storage, declared variables and selection, withdraws once, executes rewards, and restores those snapshots if a reward fails. It attempts a refund; a failed refund appends an explicit reconciliation entry to `.data/compensation.log` and logs a severe error.
+
+External callbacks may change other plugins, the world or send messages before failing. Those effects cannot be rolled back automatically. Vault has no cross-plugin atomic transaction or general crash-safe idempotency API. The implementation prevents repeated execution within a live session and compensates ordinary partial failures; it does not promise atomicity across process crashes or other plugins. Review the compensation log manually with the economy provider. Use an application-owned idempotency key inside external callbacks for durable purchases.
+
+
+## Validation and updates
+
+Use this page to look up field types, defaults and renderer limits. For a complete menu, start with [1st steps: assets and your first screen](/getting-started/first-screen/). Practical guides cover [components](/guides/components/), [actions](/configuration/actions/), [conditions](/configuration/conditions/), [variables](/configuration/variables/) and [reusable definitions](/configuration/reuse/).
+
+Screen files live recursively under `screens/`. Registries also load `themes/`, `templates/`, `actions/`, `assets/` and `languages/`. Loading is sorted and rejects paths outside the data directory, duplicate keys and YAML collection aliases. Definitions are immutable and shared; state belongs to the player's session. Strict mode rejects unknown fields. Invalid values and unsupported features fail even when strict mode is off. Errors identify file, screen, component and field. Failed reloads retain the previous valid configuration.
+
+At startup, an invalid screen is skipped while valid screens remain available. The console reports each rejected screen; `/cc inspect <screen>` shows its recorded error. For inherited settings, the diagnostic names the affected child, the file containing the invalid value and `inherited-from=<parent ID>`. A child that replaces an invalid parent setting with a valid value can still load. Duplicate IDs reject all definitions with that ID. Errors in shared registries, global configuration or shared pack resources can still prevent startup. Reloads remain atomic: any error rejects the reload and preserves the running configuration and sessions.
+
+Bundled YAML files outside `screens/` gain missing default keys on startup and reload. Maps are traversed recursively; existing scalar values, explicit nulls and complete lists are preserved, along with comments and custom keys. Defaults do not overwrite a scalar/list with a map. This synchronization applies only to paths listed in the JAR's `defaults.index`, not arbitrary user files. Screen files are excluded: examples are seeded once into a fresh empty data directory, and neither removed screens nor new release examples are installed into an existing setup. See [installation behavior](/start/installation/).
+
+All geometry uses integer GUI units, not desktop pixels. The client applies GUI Scale. Profiles are chosen manually; the server cannot query display resolution. Use the shipped `frame` screen as an inherited base. Start with `/cc open home` to browse examples; `selection` demonstrates application-defined option values. `classes`, `simple` and the class-based local-page demo are optional examples. [The annotated example](/examples/annotated.yml) can be copied into `screens/`.

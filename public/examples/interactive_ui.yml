@@ -1,0 +1,176 @@
+schema-version: 1
+id: interactive_ui
+extends: frame
+title: '<gold>Search and scroll'
+variables:
+  query: {type: string, scope: session, default: ''}
+components:
+  heading:
+    text: '<gold>Search, scroll, animate and notify'
+  search:
+    type: search
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 82}
+    size: {width: 217, height: 20}
+    padding: 4
+    layer: 20
+    text: '<white>Search'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    data: {variable: query, placeholder: 'All items', prompt: 'Search items'}
+  clear_search:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 327, y: 82}
+    size: {width: 65, height: 20}
+    padding: 4
+    layer: 20
+    text: '<white>Reset'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    actions:
+      click: [{type: set-variable, name: query, value: ''}]
+  results:
+    type: scroll
+    position: {x: 99, y: 110}
+    size: {width: 293, height: 77}
+    data: {row-height: 17, gap: 3, search-variable: query}
+    children:
+      iron:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<white>Iron sword'
+        search-text: 'iron sword weapon'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected iron sword', duration-ticks: 60}]
+      diamond:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<aqua>Diamond sword'
+        search-text: 'diamond sword weapon'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected diamond sword', duration-ticks: 60}]
+      bow:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<white>Bow'
+        search-text: 'bow weapon'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected bow', duration-ticks: 60}]
+      apple:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<red>Apple'
+        search-text: 'apple food'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected apple', duration-ticks: 60}]
+      bread:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<yellow>Bread'
+        search-text: 'bread food'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected bread', duration-ticks: 60}]
+      compass:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<white>Compass'
+        search-text: 'compass travel'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected compass', duration-ticks: 60}]
+      map:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<white>Map'
+        search-text: 'map travel'
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: notify, target: notice, text: '<green>Selected map', duration-ticks: 60}]
+  previous:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 190}
+    size: {width: 65, height: 17}
+    layer: 20
+    padding: 3
+    text: '<white>Previous'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    actions:
+      click: [{type: scroll, target: results, rows: -1}]
+  next:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 169, y: 190}
+    size: {width: 65, height: 17}
+    layer: 20
+    padding: 3
+    text: '<white>Next'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    actions:
+      click:
+        - {type: scroll, target: results, rows: 1}
+        - {type: animate-component, target: status}
+  count:
+    type: text
+    position: {x: 245, y: 193}
+    size: {width: 147, height: 11}
+    layer: 20
+    text: '<gray>Matches: {scroll.results.total}'
+  status:
+    type: text
+    position: {x: 99, y: 210}
+    size: {width: 204, height: 10}
+    layer: 20
+    text: '<gray>All four features work without shaders.'
+    animation:
+      duration-ticks: 20
+      interval-ticks: 2
+      from: {x: 16}
+      easing: ease-out
+  notice:
+    type: notification
+    position: {x: 99, y: 223}
+    size: {width: 293, height: 20}
+    padding: 4
+    layer: 60
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    animation:
+      duration-ticks: 10
+      interval-ticks: 2
+      from: {y: -8, scale: 0.9}

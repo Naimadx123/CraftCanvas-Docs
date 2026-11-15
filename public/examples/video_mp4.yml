@@ -1,0 +1,18 @@
+schema-version: 1
+id: movie
+extends: frame
+title: '<aqua>Movie player'
+session:
+  timeout-ticks: 0
+components:
+  heading:
+    text: '<aqua><bold>MOVIE PLAYER'
+  movie:
+    type: image
+    position: {x: 112, y: 82}
+    size: {width: 288, height: 162}
+    layer: 20
+    autoplay:
+      file: videos/intro.mp4
+      audio: true
+      loop: false

@@ -180,7 +180,7 @@ class CanvasGreetingKotlin : JavaPlugin() {
 }
 ```
 
-The source files are in [examples/addon](https://github.com/Naimadx123/CraftCanvas/tree/master/examples/addon). `gradlew.bat checkApiExamples` compiles both against the public API. Use one implementation in your addon.
+Use one of the implementations above in your addon.
 
 ## Connect the callback to YAML
 

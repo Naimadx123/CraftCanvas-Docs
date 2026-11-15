@@ -5,11 +5,12 @@ title: "Table of contents"
 * [Introduction](/start/introduction/)
 * Getting started
   * [Installation](/start/installation/)
-  * [1st steps](/getting-started/first-screen/)
+  * [Your first screen](/getting-started/first-screen/)
   * [Commands and permissions](/start/commands/)
 * Screen configuration
+  * [Configuration overview](/configuration/overview/)
+  * [Main configuration](/configuration/config/)
   * [Components and layout](/guides/components/)
-  * [YAML reference](/reference/yaml/)
   * [Variables and formatting](/configuration/variables/)
   * [Actions](/configuration/actions/)
   * [Conditions](/configuration/conditions/)
@@ -21,14 +22,16 @@ title: "Table of contents"
   * [Vanilla sprites](/guides/sprites/)
   * [Inventory workbenches](/guides/crafting/)
   * [Automatic item models](/guides/item-icons/)
-  * [Experimental shader hover](/guides/shader-hover/)
+  * [Button hover](/guides/shader-hover/)
 * Resources and maintenance
   * [Resource packs](/resources/resource-pack/)
   * [Integrations](/resources/integrations/)
   * [Player storage](/configuration/storage/)
-  * [Renderer limits](/reference/book-renderer/)
   * [Troubleshooting](/resources/troubleshooting/)
   * [Upgrading](/resources/migration/)
+* Reference
+  * [YAML reference](/reference/yaml/)
+  * [Renderer limits](/reference/book-renderer/)
 * Developer API
   * [Quick start](/developers/quick-start/)
   * [API reference](/developers/api/)
@@ -45,4 +48,3 @@ title: "Table of contents"
   * [Addon bundles](/developers/bundles/)
   * [Reloading](/developers/reload/)
   * [Events](/developers/events/)
-  * [Building from source](/developers/building/)

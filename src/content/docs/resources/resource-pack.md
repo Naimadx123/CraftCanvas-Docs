@@ -2,13 +2,16 @@
 title: "Resource pack"
 ---
 
-CraftCanvas writes the public generated ZIP directly to `plugins/CraftCanvas/craftcanvas.zip`. Startup logs show its location. Internal manifests, character IDs, hashes and immutable export copies stay under `.data/generated-pack/`.
+The resource pack contains the graphics, fonts and sounds players need to see your screens. CraftCanvas creates `plugins/CraftCanvas/craftcanvas.zip`; you choose how it reaches players.
 
-## Addon bundles
+| Your setup | Follow |
+| --- | --- |
+| Nexo builds and sends your pack | [Automatic Nexo workflow](#automatic-nexo-workflow) |
+| You host the CraftCanvas ZIP yourself | [Standalone workflow](#standalone-workflow) |
+| Another plugin sends a combined pack | [Manual external sender](#external-workflows) |
 
-Addons can install namespaced screen YAML, asset manifests and PNG/OGG resources through `CanvasService.installBundle`. CraftCanvas tracks file ownership and checksums, rejects conflicts and leaves existing installations unchanged during normal addon startup. Updates require an explicit administrator workflow; local edits are protected. See [the addon bundle API](/developers/bundles/) for paths, namespaces, limits and results.
+After changing artwork or layout, rebuild and make sure players load the updated pack. Editing the generated ZIP directly will be lost at the next build.
 
-Installation alone does not build or send a pack. Run `/cc validate` and `/cc reload` afterward, or call the [asynchronous reload API](/developers/reload/). Its result confirms configuration application and CraftCanvas pack generation/export; asynchronous hosting/merging and player acceptance remain separate. Installed addon resources enter the same compiler and generated pack as administrator-authored assets, including the automatic Nexo export described below. Keep `.data/addon-bundles/` in backups. Deleting an addon-owned screen is respected by automatic installation; an explicit bundle UPDATE can restore files listed by that request.
 
 ## Automatic Nexo workflow
 
@@ -18,7 +21,7 @@ CraftCanvas recognizes the generated/uploaded combined pack through Nexo's publi
 
 The Nexo export retains shader includes and version-overlay metadata but defers core shader programs until `NexoPostPackGenerateEvent`. This avoids Nexo merging incompatible program versions during ZIP import. CraftCanvas then combines verified Nexo GIF programs with its effects, or installs standalone programs when no Nexo text shader is present. Unknown programs are rejected.
 
-Nexo can load its pack before the player enters the world. CraftCanvas records these configuration-phase acknowledgements as well as game-phase `PlayerResourcePackStatusEvent` acknowledgements. A narrow version-selected Paper adapter observes decoded resource-pack response packets without changing or resending them, because the Bukkit event only covers the game phase. It uses the `handle` connection field on 1.21.11 and `packetListener` on 26.x. Tracking starts before asynchronous CraftCanvas preparation and survives the transition into the world. Reconnecting resets connection-specific status; declined, failed and unrelated pack UUIDs never authorize a screen. Nexo remains the sole sender. If this version-specific observer cannot attach, the server log reports the failure; updating Nexo's pack in game can still produce the normal game-phase event.
+Nexo can load its pack before the player enters the world. CraftCanvas records these configuration-phase acknowledgements as well as game-phase `PlayerResourcePackStatusEvent` acknowledgements. This also covers pack downloads completed before the player enters the world. Tracking starts before asynchronous CraftCanvas preparation and survives the transition into the world. Reconnecting resets connection-specific status; declined, failed and unrelated pack UUIDs never authorize a screen. Nexo remains the sole sender. If this version-specific observer cannot attach, the server log reports the failure; updating Nexo's pack in game can still produce the normal game-phase event.
 
 The path `plugins/Nexo/pack/external_packs/craftcanvas.zip` is reserved for CraftCanvas and is replaced automatically whenever its generated content changes, including after a plugin update or removal of the CraftCanvas data folder. Replacement is atomic where supported; identical ZIPs retain their modification time. No ownership file is required, and older `.data/generated-pack/nexo-export.json` files are no longer used. Put custom artwork in CraftCanvas's `assets/` directory rather than editing the exported ZIP. Other Nexo files and configuration are not rewritten. Source fonts/textures/sounds and text shader conflicts with other packs are still checked before export.
 
@@ -26,8 +29,8 @@ Set `pack.nexo-auto-export: false` to use manual workflows below. This does not 
 
 ## Standalone workflow
 
-1. Run `/cc pack build` or `./gradlew.bat examplePack` for the shipped examples.
-2. Take `plugins/CraftCanvas/craftcanvas.zip`. Its hash is in `plugins/CraftCanvas/.data/generated-pack/sha1.txt`. The Gradle example task writes the public ZIP to `build/examples/craftcanvas.zip`. A content-addressed immutable export copy also lives under `.data/generated-pack/releases/<sha1>/`.
+1. Run `/cc pack build` on the server.
+2. Take `plugins/CraftCanvas/craftcanvas.zip`. Its hash is in `plugins/CraftCanvas/.data/generated-pack/sha1.txt`. A content-addressed immutable export copy also lives under `.data/generated-pack/releases/<sha1>/`.
 3. Host the ZIP at a direct HTTP(S) URL that clients can reach. CraftCanvas does not silently start a web server or upload to a third party.
 4. Set `pack.sender: craftcanvas` and `pack.url` to that direct download URL. Leave `pack.sha1` empty to use the generated hash. If CraftCanvas is the effective sender and the URL is empty, opening reports `PACK_UNAVAILABLE` immediately, even with `pack.missing: wait`.
 5. Reload. The plugin sends one named pack and records statuses. Wait for the expected pack UUID to reach `SUCCESSFULLY_LOADED`; `/cc debug <player>` shows identities and statuses.
@@ -151,3 +154,9 @@ With either shader option enabled, the base pack supplies the 1.21.11 shaders. `
 The version differences are documented in Mojang's [26.2 release notes](https://www.minecraft.net/en-us/article/minecraft-java-edition-26-2) and [26.3 release notes](https://www.minecraft.net/en-us/article/minecraft-java-edition-26-3). The shader entry points are adapted from the official client files. Match the server/client versions; ViaVersion and third-party shader engines are not covered by these overlays.
 
 Generated resources are written only under `.data/generated-pack/`. An older top-level `generated-pack/` directory is ignored and left untouched.
+
+## Addon bundles
+
+Addons can install namespaced screen YAML, asset manifests and PNG/OGG resources through `CanvasService.installBundle`. CraftCanvas tracks file ownership and checksums, rejects conflicts and leaves existing installations unchanged during normal addon startup. Updates require an explicit administrator workflow; local edits are protected. See [the addon bundle API](/developers/bundles/) for paths, namespaces, limits and results.
+
+Installation alone does not build or send a pack. Run `/cc validate` and `/cc reload` afterward, or call the [asynchronous reload API](/developers/reload/). Its result confirms configuration application and CraftCanvas pack generation/export; asynchronous hosting/merging and player acceptance remain separate. Installed addon resources enter the same compiler and generated pack as administrator-authored assets, including the automatic Nexo export described below. Keep `.data/addon-bundles/` in backups. Deleting an addon-owned screen is respected by automatic installation; an explicit bundle UPDATE can restore files listed by that request.

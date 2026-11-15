@@ -1,8 +1,11 @@
 ---
-title: "Experimental shader hover"
+title: Button hover
+description: Highlight buttons under the cursor with a shared or custom outline.
 ---
 
-Shader hover adds a temporary PNG overlay to a button while the client's native text hover is active. It is an optional extension of `book-glyph`; the shipped configuration enables it alongside animation shaders. The shader variants target **Paper/Folia 1.21.11 through 26.3 with matching vanilla clients**, including 26.1, 26.1.1 and 26.1.2. ViaVersion and modified rendering clients are not covered.
+Hover adds a temporary outline when the cursor moves over a button. The supplied configuration already enables it for eligible app controls. Physical A/B, Home and Exit controls keep their original artwork.
+
+Reload and load the updated pack after changing hover settings. The effect needs a supported matching vanilla client; ViaVersion and modified rendering clients are not covered.
 
 ## Enable and try the example
 
@@ -11,13 +14,12 @@ Shader hover adds a temporary PNG overlay to a button while the client's native 
    ```yaml
    shaders:
      hover: true
-     animations: false
    ```
 
-2. Copy [the complete example](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/shader_hover.yml) to `plugins/CraftCanvas/screens/shader_hover.yml`. Keep the bundled `frame` screen and the standard `button`, `selected_frame`, `close` and `book_panel` PNGs/manifests. This extra example is outside the default screens. The bundled handheld examples already use automatic hover outlines on eligible application controls; physical A/B and Home/Exit controls explicitly opt out.
+2. Copy [the complete example](/examples/shader_hover.yml) to `plugins/CraftCanvas/screens/shader_hover.yml`. Keep the bundled `frame` screen and the standard `button`, `selected_frame`, `close` and `book_panel` PNGs/manifests. This extra example is outside the default screens. The bundled handheld examples already use automatic hover outlines on eligible application controls; physical A/B and Home/Exit controls explicitly opt out.
 3. Run `/cc reload`. A successful reload compiles the screen and builds a new pack. Unsupported server versions reject the setting. `/cc debug capabilities` shows whether the mode is enabled.
 4. Load the newly generated pack. With automatic Nexo export, CraftCanvas replaces its managed ZIP and requests a Nexo rebuild; wait for Nexo's merged pack to load. With standalone hosting, replace the hosted ZIP and send the new version through your configured sender.
-5. Run `/cc open shader_hover`. Move over FIRST and SECOND, click to change the persistent selection, and compare with LOCKED. The disabled button has its ordinary tooltip but no hover overlay or server action. The inherited X closes the screen.
+5. Run `/cc open shader_hover`. Move over FIRST and SECOND, click to change the persistent selection, and compare with LOCKED. The disabled button has its ordinary tooltip but no hover overlay or server action. The inherited Exit button closes the screen.
 
 Turning the option on or off changes pack contents. It is not an immediate per-player shader switch. To disable hover overlays, remove `hover-overlay` fields or remove screens using them, set `shaders.hover: false`, reload and distribute the updated pack. The shared shader remains if `shaders.animations` is enabled. A failed reload preserves the previous active configuration.
 
@@ -82,25 +84,3 @@ Other providers' text shaders are conflicts, not something CraftCanvas automatic
 The overlay renders in the tooltip layer, above the menu, rather than participating in the menu's normal layer ordering. Exclusion uses stock tooltip sprite padding and pinned vanilla font metrics, with the 26.3 multiline show-text spacing correction; replacements that change their padding or glyph advances are not covered. Transparent image pixels keep the underlying button's rectangular font hitbox; shader displacement changes pixels, not the original hit-test geometry. An ordinary tooltip may overlap part of the panel as it does without shaders. The server cannot confirm that a modified client's rendering pipeline has executed the shader just because the pack loaded successfully.
 
 Check the example in vanilla before using it on a live server: test F3+H both on and off, multiple GUI Scale settings, both ends of each button, all manual profiles, tooltip repositioning near screen edges, two players selecting independently, disabled actions, reload and X/Escape. Shader compilation or a standalone OpenGL check alone does not confirm Minecraft book rendering or hitboxes.
-
-## Developer check
-
-The Gradle integration test `ShaderHoverIntegrationTest` builds `build/shader-hover-example/craftcanvas.zip`. `tools/check_hover_shader.py` can compare its displaced pixels in a standalone OpenGL 3.3 context against the compiled metadata. Install Python packages `moderngl` and `glcontext` into a temporary environment, then run:
-
-```shell
-python tools/check_hover_shader.py --client /path/to/official-1.21.11-client.jar --pack build/shader-hover-example/craftcanvas.zip
-```
-
-The tool verifies the official client SHA-1, resolves the pack's active overlays and shader imports, and falls back to stock client resources where the pack supplies no override. It compares overlay pixels and tooltip exclusion at several viewport sizes and marker positions, and reports the effective vertex/fragment paths. It requires a working OpenGL context and does not start or control a Minecraft client.
-
-Use `--glyph-pack build/shader-hover-example/craftcanvas.zip` to check freshly generated marker tiles against the effective shaders of a separate merged pack passed as `--pack`.
-
-To regenerate the pinned font definition and compressed Unicode advance table, use `tools/generate_hover_tooltip_metrics.py --client /path/to/official-1.21.11-client.jar --asset-index /path/to/1.21.11-assets.json`. This developer tool requires Pillow, checks the client SHA-1 and downloaded font asset hashes, and reads Mojang's versioned font providers. The plugin does not download fonts at runtime or distribute vanilla PNG/HEX font files.
-
-The optional API integration tests can use an administrator-supplied Nexo JAR without adding Nexo as a runtime dependency:
-
-```shell
-gradlew.bat integrationTest --tests "*NexoShaderApiTest" -PnexoTestJar=/path/to/nexo-1.29.1.jar
-```
-
-An additional `-PnexoTestPack=/path/to/merged.zip` enables the captured-pack test, which writes a composed copy under `build/shader-hover-example/` for the GPU check. It leaves the supplied JAR unchanged and writes the ZIP through a temporary file after closing the input archive. Use a separate source ZIP to retain an unchanged capture; choosing the output path as input safely replaces it with the composed result. These tests are skipped when no Nexo JAR is supplied.

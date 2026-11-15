@@ -1,0 +1,27 @@
+schema-version: 1
+id: annotated
+title: '<gold>Annotated screen'
+backend: book-glyph
+extends: frame
+# This profile is selected manually. The server does not know GUI Scale.
+layout:
+  reference-width: 512
+  reference-height: 320
+  profile: normal
+  overlap: reject-interactive
+variables:
+  selected_option:
+    type: string
+    scope: session
+    default: option_a
+components:
+  option:
+    template: selection_button
+    parameters:
+      variable: selected_option
+      value: option_a
+      label: 'Option A'
+      x: 24
+      y: 100
+    # Tooltip rendering is local. No hover event is sent to the server.
+    tooltip: ['<gold>Option A', '<gray>Click to keep this selection in the session.']

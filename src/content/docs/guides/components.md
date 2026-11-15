@@ -1,10 +1,17 @@
 ---
-title: "Build a screen from components"
+title: Components and layout
+description: Add text, images and buttons, and place them on the console display.
 ---
 
-For a 5 by 5 crafting board displaying the player's actual inventory, with click transfers and recipes, see [inventory workbenches](/guides/crafting/).
+A component is one part of a screen: a label, image, button or group. Give it an ID under `components`, then choose its type, position and size. If you have not made a screen yet, start with [your first screen](/getting-started/first-screen/).
 
-Each example below is a fragment for a screen extending `frame`. Add component maps under `components` and variables under the screen's root `variables`. Keep the inherited background and unconditional close control. The current frame is a 512 x 320 handheld; put application content inside its screen, approximately x=104..400 and y=80..248, leaving the physical console controls clear. Full field types and ranges are in the [YAML reference](/reference/yaml/).
+## Where components go
+
+The examples on this page go under `components` in a screen with `extends: frame`. A section named `variables` goes at the screen root, alongside `components`.
+
+The console uses a 512 by 320 canvas. `x` goes right from its left edge; `y` goes down from its top. Keep app content around `x: 104` to `400` and `y: 80` to `248`, leaving the physical console buttons clear. `layer` controls drawing order: higher values draw on top.
+
+`size` gives a component its area. Text still needs room to fit: use `align: center` and `vertical-align: center` to center a label inside it, and `overflow: wrap` when text should use more than one line.
 
 ## Text, images and tooltips
 
@@ -22,7 +29,7 @@ components:
     position: {x: 112, y: 140}
     size: {width: 48, height: 48}
     layer: 20
-    asset: {provider: native, kind: image, id: 'craftcanvas:archer'}
+    asset: {provider: native, kind: image, id: 'craftcanvas:app/archer'}
     tooltip: ['<gold>Travel guide', '<gray>Inspect the available routes.']
 ```
 
@@ -58,7 +65,7 @@ components:
       click: [{type: set-variable, name: destination, value: market}]
 ```
 
-The overlay persists after selection. Tooltips and cursor changes are native local hover behavior. Optional [shader hover](/guides/shader-hover/) can add a temporary `hover-overlay` on supported vanilla clients from 1.21.11 through 26.3; `hover-image` and `on-hover` remain unsupported. A PNG-backed button has a rectangular font hitbox, including transparent pixels and its advance edge. A text-only button uses the text's area instead of the whole declared box.
+The selected outline stays while `destination` is `market`. A hover outline is temporary and disappears when the cursor leaves the button. Optional [shader hover](/guides/shader-hover/) can add a temporary `hover-overlay` on supported vanilla clients from 1.21.11 through 26.3; `hover-image` and `on-hover` remain unsupported. A PNG-backed button has a rectangular font hitbox, including transparent pixels and its advance edge. A text-only button uses the text's area instead of the whole declared box.
 
 ## Groups, rows, columns and grids
 
@@ -134,7 +141,7 @@ This fragment only sends a confirmation message; connect your own reward action 
 
 The server starts the cooldown when it accepts the click, before running the action list. A later action failure or cancelled confirmation does not refund it. On a blocked click, `{remaining}` is the time left in whole seconds, rounded up. Set `message: ''` to suppress the feedback. Deadline checks do not require periodic book refresh.
 
-Closing, reopening or reloading a screen keeps the deadline. With `persistent-player-data: true`, cooldowns are also stored in player SQL data and survive reconnects and restarts. With persistence disabled, reconnecting can reset them. Keep shared keys stable across upgrades. For paid rewards or exact-once transactions, use an addon-owned transaction ledger as well.
+Closing, reopening or reloading a screen keeps the deadline. With `persistent-player-data: true`, cooldowns are also stored in player SQL data and survive reconnects and restarts. With persistence disabled, reconnecting can reset them. Keep shared keys stable across upgrades. For paid rewards that must survive interrupted transactions, use an addon that tracks completed purchases.
 
 `cooldown-ticks` remains a separate short click debounce, defaulting to four ticks per component/session. Local-page navigation does not send a server click and cannot use either configured cooldown. The unconditional close control cannot use the player cooldown.
 
@@ -142,7 +149,7 @@ Closing, reopening or reloading a screen keeps the deadline. With `persistent-pl
 
 A `tabs` component contains buttons with `actions.click: [{type: tab, value: equipment}]`. Mark its content with `data: {tab: equipment}`. To use pages, add `data: {page: 0}` or `data: {page: 1}` to content and a `pagination` button with `actions.click: [{type: page, value: next}]`.
 
-A `carousel` contains image/card children and displays the child at the current page modulo child count. Page actions control which child appears. Both navigation styles use regular buttons and server state; they do not provide swipe or wheel input. See the [catalog](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/catalog.yml) for complete page buttons and [classes](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/classes.yml) for composed portraits, stats and skill tooltips.
+A `carousel` contains image/card children and displays the child at the current page modulo child count. Page actions control which child appears. Both navigation styles use regular buttons and server state; they do not provide swipe or wheel input. See the [catalog](/examples/screens/catalog.yml) for complete page buttons and [classes](/examples/screens/classes.yml) for composed portraits, stats and skill tooltips.
 
 ## Confirmation and close
 
@@ -154,8 +161,8 @@ The root X is a button with only `actions.click: [{type: close}]`. The inherited
 
 | Component | Use | Example |
 | --- | --- | --- |
-| toggle | Boolean preference | [Settings notifications](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/settings.yml) |
-| choice | Cycle through declared strings | [Settings difficulty](https://github.com/Naimadx123/CraftCanvas/blob/master/src/main/resources/screens/settings.yml) |
+| toggle | Boolean preference | [Settings notifications](/examples/screens/settings.yml) |
+| choice | Cycle through declared strings | [Settings difficulty](/examples/screens/settings.yml) |
 | stepper | Increase a bounded number, wrapping at the maximum | `data: {variable: amount, min: 1, max: 10, step: 1}` with an integer variable |
 | slider | Choose a numeric cell by clicking | [Slider fields and example](/reference/yaml/#click-slider) |
 | text-input | Edit a string in a separate native dialog | [Text editor fields and example](/reference/yaml/#native-text-editor) |

@@ -1,0 +1,76 @@
+schema-version: 1
+id: shader_hover
+extends: frame
+title: '<gold>CraftCanvas hover'
+variables:
+  chosen: {type: string, default: first}
+components:
+  heading:
+    text: '<gold><bold>HOVER AND SELECT'
+  selected:
+    type: text
+    position: {x: 109, y: 183}
+    size: {width: 271, height: 13}
+    layer: 30
+    text: '<white>Selected: {chosen}'
+  first:
+    type: button
+    vertical-align: center
+    position: {x: 109, y: 106}
+    size: {width: 87, height: 34}
+    padding: 8
+    layer: 20
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    hover-overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    hover-overlay-border: 4
+    align: center
+    text: '<white>FIRST'
+    tooltip: ['<gold>First option', '<gray>Click to select.']
+    click-sound: minecraft:ui.button.click
+    states:
+      selected:
+        when: {variable-equals: {name: chosen, value: first}}
+        color: '#55ff55'
+    actions:
+      click:
+        - {type: set-variable, name: chosen, value: first}
+        - {type: refresh}
+  second:
+    type: button
+    vertical-align: center
+    position: {x: 207, y: 106}
+    size: {width: 87, height: 34}
+    padding: 8
+    layer: 20
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    hover-overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    hover-overlay-border: 4
+    align: center
+    text: '<white>SECOND'
+    tooltip: ['<gold>Second option', '<gray>Click to select.']
+    click-sound: minecraft:ui.button.click
+    states:
+      selected:
+        when: {variable-equals: {name: chosen, value: second}}
+        color: '#55ff55'
+    actions:
+      click:
+        - {type: set-variable, name: chosen, value: second}
+        - {type: refresh}
+  disabled:
+    type: button
+    vertical-align: center
+    position: {x: 305, y: 106}
+    size: {width: 87, height: 34}
+    padding: 8
+    layer: 20
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    hover-overlay: {provider: native, kind: image, id: 'craftcanvas:selected_frame'}
+    hover-overlay-border: 4
+    align: center
+    text: '<gray>LOCKED'
+    tooltip: ['<gray>This option is disabled.']
+    conditions:
+      enabled: {variable-equals: {name: chosen, value: unavailable}}
+    actions:
+      click: [{type: message, text: '<red>This action must remain inaccessible.'}]
