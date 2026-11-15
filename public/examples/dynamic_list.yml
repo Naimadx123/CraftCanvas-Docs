@@ -1,0 +1,89 @@
+schema-version: 1
+id: dynamic_list
+extends: frame
+title: '<gold>Addon records'
+variables:
+  query: {type: string, scope: session, default: ''}
+components:
+  heading:
+    text: '<gold>Dynamic list (load records first)'
+  search:
+    type: search
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 82}
+    size: {width: 217, height: 20}
+    padding: 4
+    layer: 20
+    text: '<white>Search'
+    data: {variable: query, placeholder: 'All records'}
+  results:
+    type: scroll
+    position: {x: 99, y: 110}
+    size: {width: 293, height: 37}
+    data: {source: addon, row-height: 17, gap: 3, search-variable: query}
+    # Two reusable visual slots; the addon may supply up to 1000 records.
+    children:
+      row_1:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<white>{item.name}'
+        tooltip: ['<gray>ID: {item.id}', '<gold>Price: {item.price}']
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: callback, id: 'example:pick-record'}]
+      row_2:
+        type: button
+        align: center
+        vertical-align: center
+        size: {width: 293, height: 17}
+        padding: 3
+        layer: 20
+        text: '<white>{item.name}'
+        tooltip: ['<gray>ID: {item.id}', '<gold>Price: {item.price}']
+        asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+        actions:
+          click: [{type: callback, id: 'example:pick-record'}]
+  previous:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 155}
+    size: {width: 65, height: 17}
+    padding: 3
+    layer: 20
+    text: '<white>Previous'
+    actions:
+      click: [{type: scroll, target: results, rows: -1}]
+  next:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 169, y: 155}
+    size: {width: 65, height: 17}
+    padding: 3
+    layer: 20
+    text: '<white>Next'
+    actions:
+      click: [{type: scroll, target: results, rows: 1}]
+  count:
+    type: text
+    position: {x: 245, y: 158}
+    size: {width: 147, height: 11}
+    layer: 20
+    text: '<gray>Matches: {scroll.results.total}'
+  load:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 183}
+    size: {width: 130, height: 20}
+    padding: 4
+    layer: 20
+    text: '<green>Load records'
+    actions:
+      click: [{type: async-callback, id: 'example:load-records', timeout-ticks: 200}]

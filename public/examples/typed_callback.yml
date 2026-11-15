@@ -1,0 +1,23 @@
+schema-version: 1
+id: typed_callback
+extends: frame
+title: '<gold>Typed addon callback'
+components:
+  heading:
+    text: '<gold>Typed addon callback'
+  submit:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 82}
+    size: {width: 293, height: 20}
+    padding: 4
+    layer: 20
+    text: '<white>Run typed callback'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    conditions:
+      enabled: {callback: {id: 'example:level', data: {minimum-level: 0}}}
+    actions:
+      click:
+        - {type: callback, id: 'example:typed', data: {destination: market, amount: 3}}
+        - {type: async-callback, id: 'example:typed-async', data: {destination: spawn}}

@@ -2,7 +2,9 @@
 title: "Asynchronous addon actions"
 ---
 
-Use `registerAsyncAction(owner, id, CanvasAsyncAction)` for YAML sequences that must wait for SQL, HTTP or another asynchronous service. Register globally after `CanvasApi.whenReady(owner)`. The `CanvasRegistration` handle cleans up on owner disable. Async and synchronous IDs have separate registries; `callback` continues to use the synchronous one.
+Use an async action when the next click action must wait for a database, HTTP request or another background task. Register it with `registerAsyncAction(owner, id, CanvasAsyncAction)`. Register globally after `CanvasApi.whenReady(owner)`. The `CanvasRegistration` handle cleans up on owner disable. Async and synchronous IDs have separate registries; `callback` continues to use the synchronous one.
+
+The screen must declare a string variable `loaded_label`. This click list waits for `example:load`, then displays the updated value:
 
 ```yaml
 actions:
@@ -16,6 +18,8 @@ actions:
 ```
 
 The callback receives the player, a detached `SessionView` and the administrator's data map, and returns `CompletionStage<CanvasActionResult>`. Invocation starts on the player's owner (Paper main thread) and must return promptly. CraftCanvas does not automatically offload the invocation or make blocking I/O safe. Use your asynchronous repository/client or your addon's executor. Capture required Bukkit state before leaving that thread.
+
+## Return a result
 
 | Result | Behavior |
 | --- | --- |
@@ -31,6 +35,6 @@ Closure, navigation, successful reload, disconnect, session timeout and CraftCan
 
 Cancellation requests `cancel(false)` when the returned stage implements `Future`. This is best effort: it does not promise interruption or cancellation of upstream operations. Addon-owned workers, queued API calls and external effects remain the addon's responsibility. Link your repository's cancellation mechanism and clean up jobs on addon disable when needed. Guard delayed UI updates with `session.id`; this prevents replacement-screen updates but is not an addon-lifecycle token. CraftCanvas does not roll back SQL/HTTP effects or arbitrary Bukkit changes.
 
-The compiled [Java](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/java/example/CanvasAsyncLoading.java) and [Kotlin](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/kotlin/example/CanvasAsyncLoadingKotlin.kt) examples take a nonblocking loader and apply its string result through `setVariablesAsync` before returning `CONTINUE`. They use `loaded_label` in [async_callback.yml](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/async_callback.yml). Install that screen with its frame/assets, register `example:load`, then open `async_callback`. This feature does not introduce a custom parameter schema.
+The compiled [Java](/examples/addon/java/example/CanvasAsyncLoading.java) and [Kotlin](/examples/addon/kotlin/example/CanvasAsyncLoadingKotlin.kt) examples take a nonblocking loader and apply its string result through `setVariablesAsync` before returning `CONTINUE`. They use `loaded_label` in [async_callback.yml](/examples/async_callback.yml). Install that screen with its frame/assets, register `example:load`, then open `async_callback`. Use a [typed schema](/developers/typed-callbacks/) if the data map needs checked options.
 
 `purchase` rejects `async-callback` before execution: external requests cannot participate in the immediate reward snapshot/refund flow. Implement eligibility, idempotency and payment/reward reconciliation in your addon. Cinematic `start`/`covered` also reject waiting callbacks, including nested ones; `uncovering`/`complete` can await them like delays, without pausing the client shader timeline.

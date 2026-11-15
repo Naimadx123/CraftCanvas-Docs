@@ -2,9 +2,20 @@
 title: "Component state and edits"
 ---
 
-`CanvasService.uiState(player, sessionId)` reads an immutable snapshot of the current session on the player's owning thread. Use `uiStateAsync` from workers or another region. A stale/foreign session ID, offline player or unavailable service returns null. Keep the session ID from `openDetailed` or `session(player)` before asynchronous work.
+Read what a player's menu currently shows with `uiState`. Change one label, tooltip or appearance with `patchComponent`; the change belongs only to that session and does not rebuild the pack. Use the ID from `openDetailed` or `session(player)`. A closed or replaced session is rejected.
 
 ## Read effective state
+
+Run this on the player's thread, using the current `sessionId` and a declared `claim` component:
+
+```kotlin
+val state = canvas.uiState(player, sessionId) ?: return
+val button = state.component("claim") ?: return
+if (button.actionAvailable) {
+    owner.logger.fine("Claim button is available on ${state.profile}")
+}
+```
+
 
 `CanvasUiState` contains the `SessionView`, active profile, busy/modal/input flags, first-open status and whether frame animation or a cinematic is active. Its component map includes hidden declarations; `component(id)` returns null for an unknown ID.
 
@@ -25,17 +36,9 @@ Collections are copied and read-only. Earlier snapshots retain their data after 
 
 This is server state. Client cursor hover, locally navigated book pages, Escape closure, current shader pixels and unsubmitted keyboard input are not acknowledged by Minecraft. Motion bounds describe the server layout target in shader mode. While a modal/cinematic is active, component declarations describe the underlying book layout; the flags identify the active mode. `actionAvailable` is a current eligibility read, not a reserved action ticket or a guarantee that later addon listeners will accept execution.
 
-```kotlin
-val state = canvas.uiState(player, sessionId) ?: return
-val button = state.component("claim") ?: return
-if (button.actionAvailable) {
-    owner.logger.fine("Claim button is available on ${state.profile}")
-}
-```
-
 ## Change one session
 
-`updateComponent(player, sessionId, target, CanvasComponentUpdate(...))` replaces the whole override for that component. It is not a patch merged with the previous override. Null properties use the configured value; passing a null update clears the entire override.
+`updateComponent(player, sessionId, target, CanvasComponentUpdate(...))` replaces the whole override for that component. Properties you omit return to their configured values. Null properties use the configured value; passing a null update clears the entire override.
 
 ```kotlin
 canvas.updateComponent(player, sessionId, "claim", CanvasComponentUpdate(
@@ -53,7 +56,7 @@ Text and tooltip overrides are literal Adventure text, up to 4096 UTF-16 units w
 
 ## Apply a partial change
 
-`patchComponent(player, sessionId, target, CanvasComponentPatch(...))` changes only supplied properties. Omitted properties keep their previous overrides. It is a new operation; `updateComponent` keeps its full replacement behavior.
+`patchComponent(player, sessionId, target, CanvasComponentPatch(...))` changes only supplied properties. Omitted properties keep their previous overrides. Use this when you want to keep earlier edits to the other properties.
 
 ```kotlin
 canvas.patchComponent(player, sessionId, "claim", CanvasComponentPatch(text = Component.text("Claimed")))
@@ -99,4 +102,4 @@ The patch is immutable, including its copied reset set. `patchComponentAsync` sc
 
 Every new player operation has an `Async` equivalent returning a CompletableFuture. For several operations on one owner, use `withPlayer`. Unknown/wrong-kind targets and invalid values throw for a matching session; stale session checks run first and return false. These presentation setters reject cinematic sessions. Reads can still identify their cinematic status.
 
-Accepted edits mark the session dirty, obey rendering budgets and defer while a modal is open. They invalidate ordinary stale action tickets while preserving modal/close controls. State disappears with the session; declared persistent player cooldowns use the configured storage. A true result means accepted by the server, not displayed by the client. Geometry, assets, definitions and font changes go through [code registration and full reload](/developers/code-screens/), which rebuilds the pack.
+Accepted edits request a screen update, obey rendering budgets and defer while a modal is open. They invalidate ordinary stale action tickets while preserving modal/close controls. State disappears with the session; declared persistent player cooldowns use the configured storage. A true result means accepted by the server, not displayed by the client. Geometry, assets, definitions and font changes go through [code registration and full reload](/developers/code-screens/), which rebuilds the pack.

@@ -30,7 +30,7 @@ Create graphical Minecraft menus with text, artwork and clickable buttons. Edit 
 
 ## For addon developers
 
-Start with the [developer quick start](/developers/quick-start/), then use the [API reference](/developers/api/).
+Start with the [developer quick start](/developers/quick-start/), then use the [API overview](/developers/api/).
 
 | Task | Guide |
 | --- | --- |

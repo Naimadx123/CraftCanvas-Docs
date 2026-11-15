@@ -1,0 +1,29 @@
+schema-version: 1
+id: async_callback
+extends: frame
+title: '<gold>Async addon callback'
+variables:
+  loaded_label: {type: string, scope: session, default: 'Not loaded'}
+components:
+  heading:
+    text: '<gold>Async addon callback'
+  load:
+    type: button
+    align: center
+    vertical-align: center
+    position: {x: 99, y: 82}
+    size: {width: 293, height: 20}
+    layer: 20
+    padding: 4
+    text: '<white>Load data'
+    asset: {provider: native, kind: image, id: 'craftcanvas:button'}
+    actions:
+      click:
+        - {type: async-callback, id: 'example:load', timeout-ticks: 200}
+        - {type: message, text: '<green>Loaded: {loaded_label}'}
+  loaded:
+    type: text
+    position: {x: 99, y: 110}
+    size: {width: 293, height: 20}
+    layer: 20
+    text: '<white>{loaded_label}'

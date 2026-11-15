@@ -2,7 +2,9 @@
 title: "Typed definition builders"
 ---
 
-Use `CanvasComponentDefinition`, `CanvasActions` and `CanvasConditions` to create code-defined screens with IDE completion for schema fields and enum values. These produce the same immutable declarations as the map-based API. They do not register handlers, run actions, access players or publish screens on their own. Register the resulting screen and call a full reload as described in [code-defined screens](/developers/code-screens/).
+Use builders to create components, actions and conditions with IDE completion. Build the screen, pass it to `registerScreen`, then call a full `reload()`. See [code-defined screens](/developers/code-screens/) for that startup flow.
+
+The snippets below create definitions; `owner` is your addon and `canvas` is the ready service.
 
 ## Components
 
@@ -118,4 +120,4 @@ val stop = CanvasActions.stopCinematic("transition")
 
 Choose `CanvasCinematicDisplay.FULLSCREEN` for the whole game window. Timing, colors, direction, intensity, softness, frames and lifecycle actions share the configuration compiler. `CanvasCinematicDefinition.fromFields` and its builder's `field` method expose other schema fields.
 
-On the player's owner thread, `service.playCinematic(player, sessionId, target)` starts/restarts a visible declared target; `stopCinematic` stops it. Stale sessions return false, and matching sessions reject wrong component kinds. Neither method closes the book or rebuilds a pack. `uiState(...).components[target].cinematic` reports running state, elapsed/duration ticks, effect, display mode and covered/uncovering flags. The session-level cinematic flag includes component effects. These are server snapshots, not client acknowledgements.
+On the player's thread, `service.playCinematic(player, sessionId, target)` starts/restarts a visible declared target; `stopCinematic` stops it. Stale sessions return false, and matching sessions reject wrong component kinds. Neither method closes the book or rebuilds a pack. `uiState(...).components[target].cinematic` reports running state, elapsed/duration ticks, effect, display mode and covered/uncovering flags. The session-level cinematic flag includes component effects. These are server snapshots, not client acknowledgements.

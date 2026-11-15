@@ -2,7 +2,13 @@
 title: "Reloading with a completion result"
 ---
 
-`canvas.reload()` uses the same operation as `/cc reload` and `/cc pack build`. It may be requested from any thread, including an `installBundle` continuation. Default synchronization, YAML compilation, pack generation and managed export run on the file executor; runtime application runs globally and player closure is routed to each player's owner (all on the main thread on Paper). The future completes after application and synchronous delivery requests, not merely after queuing file work.
+After registering screens or installing YAML/assets, call `canvas.reload()` once to validate and apply them. It returns a future with a result you can check. You can request it from any thread.
+
+The work includes pack generation. Use it during startup or an administrator-requested change, rather than for every click or variable update.
+
+## Install files, then reload
+
+`bundle` below is a `CanvasAddonBundle`. Start the installation from the global/main thread; its continuation can call `reload()` directly:
 
 ```kotlin
 canvas.installBundle(this, bundle, CanvasBundleMode.INSTALL).thenAccept { installation ->
@@ -20,6 +26,8 @@ canvas.installBundle(this, bundle, CanvasBundleMode.INSTALL).thenAccept { instal
 ```
 
 Use reloads in an administrator/startup workflow. The API is for trusted server plugins and does not check a command sender's permissions. Batch installations before reloading when possible. Commands and API calls share one guard: an overlapping request returns BUSY rather than queuing or assuming the existing operation includes its changes. Retry deliberately after the existing reload finishes. An UNCHANGED bundle installation does not prove that its files have been applied; decide whether to reload for your workflow.
+
+## Read the result
 
 | Status | Meaning |
 | --- | --- |

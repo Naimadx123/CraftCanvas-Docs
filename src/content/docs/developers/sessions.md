@@ -1,8 +1,11 @@
 ---
-title: "Sessions and presentation"
+title: Opening and updating menus
+description: Open a screen, understand queued results and apply values to the correct session.
 ---
 
-Use `canvas.openAsync(player, screen, data)` from any thread, or `canvas.openDetailed(player, screen, data)` when already on the player's owner (Paper main thread). It uses the same opening pipeline as `open` and `/cc open`. Data keys must name declared variables and values must match their types/scopes. Existing `open(...): Boolean` remains compatible and returns true only for OPENED, including false for queued requests.
+Use `openAsync` to open a declared screen from any thread. When you are already in a player callback, `openDetailed` gives the result immediately on that player's thread.
+
+The optional data map sets variables declared in that screen. This example uses the bundled `home` screen and its string variable `greeting`. Keep the example installed, or use your own screen ID and declarations.
 
 ```kotlin
 val result = canvas.openDetailed(player, "home", mapOf("greeting" to "Welcome"))
@@ -35,7 +38,7 @@ Invalid data is checked before queuing. Invalid, queued and event-cancelled open
 
 ## Updating variables as one batch
 
-`canvas.setVariables(player, sessionId, values)` updates declared scalar variables together on the player's owning entity thread (Paper main thread). Capture the session ID before starting an asynchronous read and schedule the complete result back to the owning entity thread. False means CraftCanvas, the player or the session is unavailable, or the ID is stale/foreign. These checks run before inspecting the data. True means the batch was accepted, including empty maps and identical stored values.
+`canvas.setVariables(player, sessionId, values)` updates declared scalar variables together on the player's thread (Paper main thread). Capture the session ID before starting an asynchronous read and schedule the complete result back to the owning entity thread. False means CraftCanvas, the player or the session is unavailable, or the ID is stale/foreign. These checks run before inspecting the data. True means the batch was accepted, including empty maps and identical stored values.
 
 ```kotlin
 val opened = canvas.openDetailed(player, "settings")
@@ -50,9 +53,9 @@ if (opened.opened) {
 
 Each entry is staged and checked before any writes: the variable must exist, an explicit scope must match its declaration, and the value must pass the same type/length/finite-number/integer-range validation as setVariable. Unknown variables throw IllegalStateException; invalid values, nulls, non-string keys and scope mismatches throw IllegalArgumentException. Scoped and unscoped names are accepted, but including both aliases of the same variable rejects the batch even when their values agree. A rejected batch leaves every scope, dirty flag and render revision unchanged. Other omitted variables retain their values.
 
-After validation, writes to session/player/global stores complete within the same synchronous call, without intermediate callbacks or rendering. If at least one stored value differs, the target session is marked dirty once. Empty/identical batches do not request a refresh or clear an already pending refresh. Normal update limits, modal deferral and book resend/local-page behavior still apply; the method does not render immediately or promise flicker-free updates. Global values remain shared, but other sessions are not automatically marked dirty. On Folia, increments and batches are atomic for CraftCanvas global state; an action sequence is not a transaction across player regions or external plugins. Existing persistence saves player variables through its normal lifecycle; this is not an immediate disk transaction or a transaction with external plugins.
+An accepted batch applies all its values together before the screen can render again. If at least one stored value differs, the target session is scheduled for one screen update. Empty/identical batches do not request a refresh or clear an already pending refresh. Normal update limits, modal deferral and book resend/local-page behavior still apply; the method does not render immediately or promise flicker-free updates. Global values remain shared, but other sessions are not automatically marked dirty. On Folia, increments and batches are atomic for CraftCanvas global state; an action sequence is not a transaction across player regions or external plugins. Existing persistence saves player variables through its normal lifecycle; this is not an immediate disk transaction or a transaction with external plugins.
 
-For an asynchronous repository workflow, capture Bukkit/player/session information on the owning entity thread and return only the data from the worker:
+For a background load, capture the current session ID first. `repository` below is your own nonblocking data service:
 
 ```kotlin
 val sessionId = canvas.session(player)?.id ?: return
@@ -67,7 +70,7 @@ repository.loadVariables(playerId).thenCompose { values ->
 }
 ```
 
-Here `repository.loadVariables` is your addon's asynchronous read returning a future of a typed variable map. Capture the session/player IDs on the player owner; the helper schedules only the application back to that owner. Do not mutate that map while applying it. CraftCanvas retains the values, not the caller's map. Calling setVariables directly from a worker throws IllegalStateException; it does not silently enqueue work. Navigation, close, timeout, disconnect, successful reload and disable invalidate the original session. The ID does not order multiple reads belonging to the same still-active session; an addon that permits overlapping reads must track their request order itself. Existing `setVariable(player, name, value)` keeps its original signature and behavior.
+Here `repository.loadVariables` is your addon's asynchronous read returning a future of a typed variable map. Capture the session/player IDs on the player owner; the helper schedules only the application back to that owner. Do not mutate that map while applying it. CraftCanvas retains the values, not the caller's map. Calling setVariables directly from a worker throws IllegalStateException; it does not silently enqueue work. Navigation, close, timeout, disconnect, successful reload and disable invalidate the original session. The ID does not order multiple reads belonging to the same still-active session; an addon that permits overlapping reads must track their request order itself. Use `setVariable` for one immediate change; use the session-guarded batch when a delayed result must not affect a different opening.
 
 ## Dynamic graphics and session item tooltips
 
@@ -85,4 +88,4 @@ if (result.opened) {
 
 Call on the player owner thread after opening completes. The required session ID prevents a delayed addon response from altering a replacement session. False means CraftCanvas/player/session is unavailable or the ID is stale/foreign; no change is made. A matched session with an undeclared slot or invalid item throws IllegalArgumentException. Pass null to clear the slot and restore its text tooltip. Empty/AIR/non-item stacks and counts outside 1..99 are rejected. Items are cloned and converted immediately through Paper's `ItemStack.asHoverEvent()`, preserving the platform's item data components; later changes to the supplied stack cannot mutate the stored tooltip. Failure to construct the hover event leaves the previous slot intact.
 
-A changed hover event marks the session dirty; identical values leave the dirty flag unchanged. The normal action-driven book update applies it, including resend's possible flicker. A slot has one value shared by its referencing components and local book pages in that session. Slots do not become scalar variables, are not included in SessionView, are not saved, and disappear on close, navigation, reload or disable. Local change_page does not notify the server or choose a different server-side ItemStack. These calls neither give rewards nor turn an arbitrary item model into a displayed bitmap. Obtain items through your addon's/provider's own supported item API.
+A changed hover event requests a screen update; identical values leave the dirty flag unchanged. The normal action-driven book update applies it, including resend's possible flicker. A slot has one value shared by its referencing components and local book pages in that session. Slots do not become scalar variables, are not included in SessionView, are not saved, and disappear on close, navigation, reload or disable. Local change_page does not notify the server or choose a different server-side ItemStack. These calls neither give rewards nor turn an arbitrary item model into a displayed bitmap. Obtain items through your addon's/provider's own supported item API.

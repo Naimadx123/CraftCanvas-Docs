@@ -33,8 +33,9 @@ title: "Table of contents"
   * [YAML reference](/reference/yaml/)
   * [Renderer limits](/reference/book-renderer/)
 * Developer API
-  * [Quick start](/developers/quick-start/)
-  * [API reference](/developers/api/)
+  * [Your first addon](/developers/quick-start/)
+  * [API overview](/developers/api/)
+  * [Threads and async work](/developers/threading/)
   * [Code-defined screens](/developers/code-screens/)
   * [Typed definition builders](/developers/definition-builders/)
   * [Component state and edits](/developers/component-state/)
@@ -48,3 +49,5 @@ title: "Table of contents"
   * [Addon bundles](/developers/bundles/)
   * [Reloading](/developers/reload/)
   * [Events](/developers/events/)
+
+  * [Method reference](/developers/api-reference/)

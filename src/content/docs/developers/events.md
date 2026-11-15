@@ -2,7 +2,7 @@
 title: "Player events"
 ---
 
-Register Bukkit listeners using your addon instance. CraftCanvas fires these events on the corresponding player's owner: Paper main thread or Folia entity region. Different Folia players can invoke listeners concurrently.
+Use normal Bukkit listeners to react to a screen opening, selection or action. Register the listener with your addon instance. CraftCanvas fires these events on the corresponding player's owner: Paper main thread or Folia entity region. Different Folia players can invoke listeners concurrently.
 
 | Event | Fields | Cancellable |
 | --- | --- | --- |
@@ -70,6 +70,6 @@ Use this for addon-specific policy. The event does not bypass normal session tic
 
 ## Closing and cleanup
 
-`ScreenCloseEvent.reason` describes the server's close operation. Escape and native Done can close a book locally without a reliable immediate server packet; do not use this event as an exact client-window lifecycle signal. Session timeout, gameplay signals and explicit X eventually retire it. During Folia shutdown, regions may already be halted, so plugin cleanup must also run in your addon's `onDisable` rather than relying on per-player close events.
+`ScreenCloseEvent.reason` describes the server's close operation. Escape and native Done can close a book locally without a reliable immediate server packet; do not use this event as an exact client-window lifecycle signal. Session timeout, gameplay signals and the explicit Exit button eventually retire it. During Folia shutdown, regions may already be halted, so plugin cleanup must also run in your addon's `onDisable` rather than relying on per-player close events.
 
 No hover event exists: tooltip and cursor behavior are local client text interactions. For scoped callback cleanup, use [registration ownership](/developers/callbacks/).

@@ -1,0 +1,283 @@
+---
+title: Your first addon
+description: Register a menu and a clickable greeting button, then open it from a command.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+This addon adds `/greeting`. The command opens a menu created in code; clicking Say hello calls your Java or Kotlin handler and sends a chat message. You do not need to create a screen YAML file.
+
+Install CraftCanvas first and keep its shared `frame` screen and button artwork. This example reuses those resources. Choose **one** implementation below; both use the same plugin descriptor.
+
+## 1. Add the API dependency
+
+<Tabs syncKey="build-tool">
+<TabItem label="Gradle Kotlin DSL">
+
+```kotlin title="build.gradle.kts"
+repositories {
+    maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.vao.zone/snapshots")
+}
+
+dependencies {
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("zone.vao:craftcanvas-api:1.0.0-SNAPSHOT")
+}
+```
+
+</TabItem>
+<TabItem label="Maven">
+
+```xml title="pom.xml"
+<repositories>
+    <repository>
+        <id>paper</id>
+        <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+    <repository>
+        <id>vao-snapshots</id>
+        <url>https://repo.vao.zone/snapshots</url>
+    </repository>
+</repositories>
+<dependencies>
+    <dependency>
+        <groupId>io.papermc.paper</groupId>
+        <artifactId>paper-api</artifactId>
+        <version>1.21.11-R0.1-SNAPSHOT</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>zone.vao</groupId>
+        <artifactId>craftcanvas-api</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
+```
+
+</TabItem>
+</Tabs>
+
+CraftCanvas supplies the API at runtime. Keep it `compileOnly` in Gradle, or `provided` in Maven; do not package CraftCanvas classes in your addon. Compile to Java 21 bytecode to support the full server range. Kotlin addons need the Kotlin plugin and their own Kotlin runtime setup too.
+
+Use the API version matching your installed CraftCanvas. Release artifacts use `https://repo.vao.zone/releases`; the example uses the snapshot repository.
+
+## 2. Declare your plugin
+
+Create this file in your addon:
+
+```yaml title="src/main/resources/plugin.yml"
+name: CanvasGreeting
+version: 1.0.0
+main: example.CanvasGreeting
+api-version: '1.21.11'
+folia-supported: true
+depend: [CraftCanvas]
+commands:
+  greeting:
+    description: Open the greeting menu
+```
+
+`depend` makes the server load CraftCanvas first. CraftCanvas then prepares its pack in the background, so the code also waits for `CanvasApi.whenReady(this)`.
+
+Only declare Folia support if the rest of your addon follows its threading rules too.
+
+## 3. Add the plugin class
+
+<Tabs syncKey="language">
+<TabItem label="Java">
+
+Create `src/main/java/example/CanvasGreeting.java`:
+
+```java
+package example;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import net.kyori.adventure.text.Component;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import zone.vao.craftcanvas.CanvasApi;
+import zone.vao.craftcanvas.CanvasActions;
+import zone.vao.craftcanvas.CanvasAssets;
+import zone.vao.craftcanvas.CanvasComponentDefinition;
+import zone.vao.craftcanvas.CanvasRegistration;
+import zone.vao.craftcanvas.CanvasScreenDefinition;
+import zone.vao.craftcanvas.CanvasService;
+import zone.vao.craftcanvas.CanvasVariableType;
+
+public final class CanvasGreeting extends JavaPlugin {
+    private final List<CanvasRegistration> registrations = new ArrayList<>();
+    private volatile CanvasService canvas;
+
+    @Override
+    public void onEnable() {
+        CanvasApi.whenReady(this).thenAccept(api -> {
+            registrations.add(api.registerAction(this, "greeting:hello", (player, session, data) ->
+                player.sendMessage(Component.text("Hello from your addon!"))
+            ));
+            var screen = CanvasScreenDefinition.builder("greeting:menu")
+                .extendsScreen("frame")
+                .title("Greeting")
+                .variable("greeting", CanvasVariableType.STRING, "Welcome")
+                .component("heading", Map.of("text", "<aqua><bold>GREETING"))
+                .component(CanvasComponentDefinition.text("welcome")
+                    .position(112, 96).size(280, 24).layer(20)
+                    .text("<white>{greeting}, {player.name}!"))
+                .component(CanvasComponentDefinition.button("hello")
+                    .position(112, 140).size(280, 28).layer(20).centered()
+                    .asset(CanvasAssets.nativeImage("craftcanvas:button"))
+                    .text("Say hello").tooltip("Click to receive a greeting")
+                    .onClick(CanvasActions.callback("greeting:hello")))
+                .build();
+            registrations.add(api.registerScreen(this, screen));
+            api.reload().thenAccept(result -> {
+                if (isEnabled() && result.getSuccessful()) canvas = api;
+                if (!result.getSuccessful()) getLogger().warning("Menu registration failed: " + result);
+            }).exceptionally(error -> {
+                getLogger().warning("Menu preparation failed: " + error.getMessage());
+                return null;
+            });
+        }).exceptionally(error -> {
+            getLogger().warning("CraftCanvas unavailable: " + error.getMessage());
+            return null;
+        });
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) return true;
+        CanvasService api = canvas;
+        if (api == null) {
+            sender.sendMessage(Component.text("The menu is still loading."));
+            return true;
+        }
+        api.openAsync(player, "greeting:menu", Map.of("greeting", "Welcome"))
+            .thenAccept(result -> {
+                if (!result.getOpened() && !result.getQueued()) {
+                    getLogger().warning("Cannot open menu: " + result.getStatus());
+                }
+            }).exceptionally(error -> {
+                getLogger().warning("Menu request failed: " + error.getMessage());
+                return null;
+            });
+        return true;
+    }
+
+    @Override
+    public void onDisable() {
+        canvas = null;
+        for (int i = registrations.size() - 1; i >= 0; i--) registrations.get(i).unregister();
+        registrations.clear();
+    }
+}
+```
+
+[Download this Java file](/examples/addon/java/CanvasGreeting.java).
+
+</TabItem>
+<TabItem label="Kotlin">
+
+Create `src/main/kotlin/example/CanvasGreeting.kt`:
+
+```kotlin
+package example
+
+import net.kyori.adventure.text.Component
+import org.bukkit.command.Command
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import org.bukkit.plugin.java.JavaPlugin
+import zone.vao.craftcanvas.*
+
+class CanvasGreeting : JavaPlugin() {
+    private val registrations = mutableListOf<CanvasRegistration>()
+    @Volatile private var canvas: CanvasService? = null
+
+    override fun onEnable() {
+        CanvasApi.whenReady(this).thenAccept { api ->
+            registrations += api.registerAction(this, "greeting:hello", CanvasAction { player, _, _ ->
+                player.sendMessage(Component.text("Hello from your addon!"))
+            })
+            val screen = CanvasScreenDefinition.builder("greeting:menu")
+                .extendsScreen("frame")
+                .title("Greeting")
+                .variable("greeting", CanvasVariableType.STRING, "Welcome")
+                .component("heading", mapOf("text" to "<aqua><bold>GREETING"))
+                .component(CanvasComponentDefinition.text("welcome")
+                    .position(112, 96).size(280, 24).layer(20)
+                    .text("<white>{greeting}, {player.name}!"))
+                .component(CanvasComponentDefinition.button("hello")
+                    .position(112, 140).size(280, 28).layer(20).centered()
+                    .asset(CanvasAssets.nativeImage("craftcanvas:button"))
+                    .text("Say hello").tooltip("Click to receive a greeting")
+                    .onClick(CanvasActions.callback("greeting:hello")))
+                .build()
+            registrations += api.registerScreen(this, screen)
+            api.reload().thenAccept { result ->
+                if (isEnabled && result.successful) canvas = api
+                if (!result.successful) logger.warning("Menu registration failed: $result")
+            }.exceptionally { error ->
+                logger.warning("Menu preparation failed: ${error.message}")
+                null
+            }
+        }.exceptionally { error ->
+            logger.warning("CraftCanvas unavailable: ${error.message}")
+            null
+        }
+    }
+
+    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
+        if (sender !is Player) return true
+        val api = canvas
+        if (api == null) {
+            sender.sendMessage(Component.text("The menu is still loading."))
+            return true
+        }
+        api.openAsync(sender, "greeting:menu", mapOf("greeting" to "Welcome"))
+            .thenAccept { result ->
+                if (!result.opened && !result.queued) logger.warning("Cannot open menu: ${result.status}")
+            }.exceptionally { error ->
+                logger.warning("Menu request failed: ${error.message}")
+                null
+            }
+        return true
+    }
+
+    override fun onDisable() {
+        canvas = null
+        registrations.asReversed().forEach(CanvasRegistration::unregister)
+        registrations.clear()
+    }
+}
+```
+
+[Download this Kotlin file](/examples/addon/kotlin/CanvasGreeting.kt).
+
+</TabItem>
+</Tabs>
+
+## 4. Run it
+
+Build **your addon** and place its JAR beside CraftCanvas in `plugins/`. Restart the server, wait for menu preparation to finish and accept the updated resource pack. With Nexo, wait for its combined pack to rebuild and upload too.
+
+Run `/greeting`. You should see a GREETING heading, your player name and a Say hello button. Clicking it sends `Hello from your addon!` in chat. Exit closes the menu.
+
+If the command says the menu is loading, check the startup log. If opening is queued, the player still needs the expected pack. `/cc debug <player>` shows that status.
+
+## What the example does
+
+1. `whenReady` waits for the CraftCanvas service.
+2. `registerAction` connects `greeting:hello` to your handler.
+3. `registerScreen` adds `greeting:menu`, with a button that calls that handler.
+4. One full `reload()` validates the definitions and rebuilds the shared pack.
+5. `openAsync` opens the menu on the correct player thread. A queued result means the request is waiting for the pack; the returned future has already completed. CraftCanvas retries the opening after the expected pack loads.
+6. `onDisable` releases the registration handles. CraftCanvas also removes them automatically when their owner disables.
+
+The `greeting` variable is declared in the screen before the command supplies its value. Use a unique namespace for your own screen and callback IDs.
+
+Next: [API overview](/developers/api/), [code-defined screens](/developers/code-screens/) and [threading](/developers/threading/).

@@ -1,25 +1,15 @@
 ---
-title: "Code-defined screens"
+title: Code-defined screens
+description: Create a menu in Java or Kotlin, reuse shared artwork and publish it with one reload.
 ---
 
-`CanvasService.registerScreen(owner, definition)` registers an immutable screen in memory. It creates no screen YAML or asset manifest. Code screens use the same schema, compiler, conditions, actions, layout validation and resource-pack renderer as YAML screens. They appear in `screenCatalog()` after a successful full reload.
-
-## Renderer capabilities
-
-`canvas.rendererCapabilities("book-glyph")` returns an immutable set of features enabled in the published configuration. It is safe to read from any thread and returns an empty set for an unknown renderer or an unavailable service. Use it after `CanvasApi.whenReady(owner)` to choose a supported definition before registration:
-
-```kotlin
-val animate = "autoplay" in canvas.rendererCapabilities("book-glyph")
-val definitions = screens.definitions(animationEnabled = animate)
-```
-
-Features such as `autoplay`, `video-playback`, `cinematic-component` and `shader-hover-overlay` follow the configured shader switches. This describes server-side support, not the player's installed pack or graphics settings. `openDetailed` and the resource-pack lifecycle still determine whether a player can open the screen. Addons can bundle their own frame and images through code definitions rather than depending on the default example screens.
+Build a `CanvasScreenDefinition`, register it with your plugin as owner, then call one full `reload()`. The screen is created in memory; you do not need a screen YAML file. It uses the same components and pack as an administrator-made screen.
 
 ## Register and publish
 
 Obtain the service with `CanvasApi.whenReady(owner)`. Register on Paper's main thread or Folia's global thread, then call `canvas.reload()` and inspect the asynchronous result. Future continuations have no fixed thread context; schedule registrations on the global scheduler if a readiness continuation runs on another thread. Never block a tick thread with `join()` or `get()`.
 
-This Kotlin definition inherits the bundled `frame` and artwork:
+Inside the `whenReady` callback, use this definition. `canvas` is the ready service and `owner` is your addon plugin. It reuses the installed `frame` and button graphic:
 
 ```kotlin
 val definition = CanvasScreenDefinition.builder("example:code-menu")
@@ -41,7 +31,7 @@ canvas.reload().thenAccept { result ->
 
 After successful publication and pack loading, open `example:code-menu` through `openDetailed` on the player's owner or `openAsync` from a worker. Registration and pack generation do not acknowledge that a client has loaded the pack.
 
-Compiled examples: [Java](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/java/example/CanvasCodeScreens.java) and [Kotlin](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/kotlin/example/CanvasCodeScreensKotlin.kt).
+Compiled examples: [Java](/examples/addon/java/example/CanvasCodeScreens.java) and [Kotlin](/examples/addon/kotlin/example/CanvasCodeScreensKotlin.kt).
 
 ## Full schema and native resources
 
@@ -75,3 +65,13 @@ Only the same enabled owner may replace an existing code registration. Register 
 Handles are token-bound: closing an old handle cannot remove a replacement. Closing the current handle or disabling its owner immediately makes the screen unavailable and closes sessions that depend on it, including YAML screens inheriting from it. The published declaration may remain readable until the next successful full reload, but opening it is rejected. Unrelated sessions remain open. Register again after owner re-enable; registrations are not persisted across server restarts.
 
 Geometry, native resources, declared appearance assets and font metrics require definition replacement and a rebuilt/reloaded resource pack. For frequent text/value/visibility changes, use [session component edits](/developers/component-state/) instead.
+
+## Renderer capabilities
+
+`canvas.rendererCapabilities("book-glyph")` returns an immutable set of features enabled in the published configuration. It is safe to read from any thread and returns an empty set for an unknown renderer or an unavailable service. Read it after `CanvasApi.whenReady(owner)` to choose your definitions before registration. For example, check for `autoplay` before adding animated screens:
+
+```kotlin
+val animate = "autoplay" in canvas.rendererCapabilities("book-glyph")
+```
+
+Features such as `autoplay`, `video-playback`, `cinematic-component` and `shader-hover-overlay` follow the configured shader switches. This describes server-side support, not the player's installed pack or graphics settings. `openDetailed` and the resource-pack lifecycle still determine whether a player can open the screen. Addons can bundle their own frame and images through code definitions rather than depending on the default example screens.

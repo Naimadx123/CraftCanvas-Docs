@@ -1,20 +1,11 @@
 ---
-title: "Callbacks and asset providers"
+title: Callbacks and asset providers
+description: Connect a button or condition to your addon, or expose custom items.
 ---
 
-Pass your enabled Bukkit `Plugin` instance as `owner`; `this` in the example is the addon's JavaPlugin. Each registration returns a `CanvasRegistration`. Its `isRegistered` property reports whether it is active. Call `unregister()` to remove it early; the result is true only for the first removal. `close()` does the same and supports Java try-with-resources. Register callbacks and access registration handles on the global region thread (Paper main thread).
+A callback connects a YAML/code action to a handler in your plugin. An action **does something**; a condition **answers yes or no**. An asset provider supplies items or glyphs when a screen asks for them.
 
-CraftCanvas removes all three registration kinds when the owner receives `PluginDisableEvent`, and removes every addon registration when CraftCanvas shuts down. Manual cleanup from the addon's `onDisable` is optional and safe to repeat. Removal prevents future lookups from calling the addon; it does not interrupt an invocation already running or erase an already displayed client page. Existing action tickets still recheck conditions and resolve callbacks when clicked. Missing callbacks and providers fail closed or use the configured asset fallback.
-
-An owner may replace its own registration of the same kind and ID. Replacement retires the old handle immediately; calling it later cannot remove the replacement. Another owner cannot overwrite an occupied ID. Action, condition and provider IDs occupy separate registries. Native/vanilla providers and installed CraftCanvas integration adapters cannot be replaced through the addon API. Use unique namespaced action/condition IDs and a unique provider ID.
-
-The previous ownerless overloads remain available with their original JVM signatures for existing addons, but are deprecated. They infer ownership through Paper's `JavaPlugin.getProvidingPlugin` using the callback/provider implementation class, then participate in the same automatic cleanup. If that class is supplied by a shared library/plugin or a non-plugin classloader, migrate to an explicit owner; unknown owners are rejected instead of leaving an unowned callback. The legacy methods do not return handles.
-
-Use `handle.unregister()` or `handle.close()` on the global thread to remove a registration before addon shutdown.
-
-The bundled `home` screen declares `greeting`. For your own screen, declare the variables supplied through `open` or `setVariable` in its YAML. Registered callbacks can be referenced by `callback` actions and conditions; selection values may represent any application-defined option.
-
-Player service operations must run on the player's owning region thread (Paper main thread). Registrations, unregister handles and bundle requests require the global region thread (Paper main thread). Reload requests are accepted from any thread; configuration application runs on the global region. Future callback context can vary, especially on immediate rejection or disable, so schedule player work explicitly. Callbacks, conditions and player events run on the corresponding player owner and can execute concurrently for different players on Folia. Implementations must protect their shared state and only access owned world/entity data. Do not wait on reload/bundle futures from a tick thread. Providers expose ID, readiness, version, resolver, identifiers and invalidation. An AssetRequest distinguishes kind, ID, font, character, metrics and permission. Returned ItemStacks must be treated as provider-owned; CraftCanvas clones before changing presentation. CanvasAsset supports component, item, metrics and resourceKey representations.
+Register in `CanvasApi.whenReady(this)` from `onEnable`, using your plugin as owner. The handlers run on the player's thread, so keep them short and use [async actions](/developers/async-actions/) for database or HTTP work.
 
 ## Register an action and condition
 
@@ -80,3 +71,18 @@ tooltip-item: {provider: travel, kind: item, id: ticket}
 Provider `resolve` receives the player, resource kind/ID, optional font, character, metrics and permission. Return null for unsupported or unavailable resources. Item stacks are cloned for presentation. Fixed visual glyphs require a single character, font and complete metrics matching the screen geometry; for positioned/scaled artwork, distribute a native PNG through an [addon bundle](/developers/bundles/).
 
 `identifiers(kind)` supports diagnostics. `invalidate()` runs globally on reload: clear your resource cache and update readiness there. Player resolution can run concurrently on different Folia regions, so protect any mutable shared state.
+
+## Ownership and cleanup
+
+Pass your enabled Bukkit `Plugin` instance as `owner`; `this` in the example is the addon's JavaPlugin. Each registration returns a `CanvasRegistration`. Its `isRegistered` property reports whether it is active. Call `unregister()` to remove it early; the result is true only for the first removal. `close()` does the same and supports Java try-with-resources. Register callbacks and access registration handles on the global thread (Paper main thread).
+
+CraftCanvas removes all three registration kinds when the owner receives `PluginDisableEvent`, and removes every addon registration when CraftCanvas shuts down. Manual cleanup from the addon's `onDisable` is optional and safe to repeat. Removal prevents future lookups from calling the addon; it does not interrupt an invocation already running or erase an already displayed client page. Existing action tickets still recheck conditions and resolve callbacks when clicked. Missing callbacks and providers reject the operation or use the configured asset fallback.
+
+An owner may replace its own registration of the same kind and ID. Replacement retires the old handle immediately; calling it later cannot remove the replacement. Another owner cannot overwrite an occupied ID. Action, condition and provider IDs occupy separate registries. Native/vanilla providers and installed CraftCanvas integration adapters cannot be replaced through the addon API. Use unique namespaced action/condition IDs and a unique provider ID.
+
+
+Use `handle.unregister()` or `handle.close()` on the global thread to remove a registration before addon shutdown.
+
+The bundled `home` screen declares `greeting`. For your own screen, declare the variables supplied through `open` or `setVariable` in its YAML. Registered callbacks can be referenced by `callback` actions and conditions; selection values may represent any application-defined option.
+
+Player service operations must run on the player's thread (Paper main thread). Registrations, unregister handles and bundle requests require the global thread (Paper main thread). Reload requests are accepted from any thread; configuration application runs on the global region. Future callback context can vary, especially on immediate rejection or disable, so schedule player work explicitly. Callbacks, conditions and player events run on the corresponding player owner and can execute concurrently for different players on Folia. Implementations must protect their shared state and only access owned world/entity data. Do not wait on reload/bundle futures from a tick thread. Providers expose ID, readiness, version, resolver, identifiers and invalidation. An AssetRequest distinguishes kind, ID, font, character, metrics and permission. Returned ItemStacks must be treated as provider-owned; CraftCanvas clones before changing presentation. CanvasAsset supports component, item, metrics and resourceKey representations.

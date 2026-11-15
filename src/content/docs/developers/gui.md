@@ -2,16 +2,17 @@
 title: "Controlling an active GUI"
 ---
 
-Addons can control declared GUI components without constructing YAML actions. Obtain `CanvasService` through `CanvasApi.whenReady`, open the screen and retain its session ID. These methods do not create components or rebuild the resource pack. Install [interactive_ui.yml](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/interactive_ui.yml) with its bundled frame/assets for the target IDs used below.
+Use these methods to show a notification, replay a movement or change a scroll position in an open menu. The components must already be declared. Keep the current session ID so a late update cannot change a different menu. Install [interactive_ui.yml](/examples/interactive_ui.yml) with its bundled frame/assets for the target IDs used below.
 
 | Method | Effect |
 | --- | --- |
 | `showNotification(player, sessionId, target, text[, durationTicks])` | Replace a notification's content/lifetime and restart its configured entrance animation |
 | `dismissNotification(player, sessionId, target)` | Remove a notification and its entrance motion; an already absent message is accepted |
 | `playComponentAnimation(player, sessionId, target)` | Replay the visible component's declared `animation`; image-frame `animate` playback is separate |
+| `playCinematic/stopCinematic(player, sessionId, target)` | Start or stop a declared cinematic component without closing the book |
 | `setScrollOffset(player, sessionId, target, offset)` | Set a visible scroll container's zero-based row offset, clamped against its currently visible/filtered entries |
 
-Every method returns a boolean and has an `Async` counterpart returning `CompletableFuture<Boolean>`. Synchronous calls require the player's owner thread (Paper main thread). Async calls can originate on workers and use the existing player scheduler; exceptions fail the future. Cancelling a queued future prevents its operation from starting. Never block a tick thread waiting for completion.
+The notification, movement and scroll methods return a boolean and have `Async` counterparts. For cinematic components, call the synchronous method on the player thread or use `withPlayer`. Synchronous calls require the player's thread (Paper main thread). Async calls can originate on workers and use the existing player scheduler; exceptions fail the future. Cancelling a queued future prevents its operation from starting. Never block a tick thread waiting for completion.
 
 Java, after opening `interactive_ui`:
 
@@ -43,8 +44,8 @@ False means that the service/player/session is unavailable, the ID is stale/fore
 
 Notifications accept immutable Adventure text components with children, colors and bold. Content is literal: MiniMessage-looking strings and placeholders are displayed as text. Per-fragment fonts, shadows, interactions, sprites, translations and baseline decorations such as italic are rejected before mutation. Notifications inherit the screen font; missing body glyphs display a positioned box. See [screen fonts](/guides/fonts/). Text is limited to 2048 UTF-16 units; duration defaults to 60 ticks and accepts 1..1200. Scroll offsets must be nonnegative; large values clamp to the last full viewport. Current search and visibility rules are re-evaluated when setting the offset.
 
-True means accepted, including no-op dismissals and clamped offsets; it does not acknowledge client display. Operations mark the session dirty, obey the update budget and defer rendering during text input/confirmation. Modal tickets remain valid. Expiry continues while a modal is open. Navigation, closure, reload or disconnect discard this state. Static graphics, font metrics and animations must already exist in the loaded resource pack. [Shader motion and discrete fallbacks](/guides/interactive-ui/#component-animations) apply identically to API-triggered motion.
+True means accepted, including no-op dismissals and clamped offsets; it does not acknowledge client display. Operations request a screen update, obey the update budget and defer rendering during text input/confirmation. Modal tickets remain valid. Expiry continues while a modal is open. Navigation, closure, reload or disconnect discard this state. Static graphics, font metrics and animations must already exist in the loaded resource pack. [Shader motion and discrete fallbacks](/guides/interactive-ui/#component-animations) apply identically to API-triggered motion.
 
-Compiled examples: [Java](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/java/example/CanvasGuiControls.java) and [Kotlin](https://github.com/Naimadx123/CraftCanvas/blob/master/examples/addon/kotlin/example/CanvasGuiControlsKotlin.kt).
+Compiled examples: [Java](/examples/addon/java/example/CanvasGuiControls.java) and [Kotlin](/examples/addon/kotlin/example/CanvasGuiControlsKotlin.kt).
 
 For all component declarations and effective presentation, use `uiState(player, sessionId)`. `updateComponent` replaces the complete literal text, tooltip, visibility and appearance override for one session. `patchComponent` changes only supplied properties, preserving previous overrides for omitted fields. Cooldown, selection, tab and page setters are also available; see [component state and edits](/developers/component-state/). Create the declarations themselves using [code-defined screens](/developers/code-screens/) when no screen YAML is needed.
