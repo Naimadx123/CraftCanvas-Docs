@@ -72,12 +72,10 @@ Tags must be present in trusted screen definitions, actions or language entries 
 
 ## Try the complete example
 
-Run `/cc open sprites` on a fresh installation. It shows six reward icons, item and text tooltips, clickable sprites and inline item/block icons. The home screen includes a link to it. On an existing installation copy [screens/sprites.yml](/examples/screens/sprites.yml) from the new JAR or source distribution into your screens directory and run `/cc reload`. Existing example screens are not automatically rewritten. Copy the updated `reward_wheel.yml` separately if you want its new result preview.
+Open the Sprites app from the launcher or run `/cc open sprites` to see item and block icons in a menu. To add it to an existing server, download [sprites.yml](/examples/screens/sprites.yml) into `plugins/CraftCanvas/screens/` and run `/cc reload`. For the wheel's prize preview, copy `screens/reward_wheel.yml` from the plugin JAR.
 
 The catalog verifies source texture metrics. A different client pack that removes or changes those textures' padding/dimensions can change the font advance or show a missing texture. Use matching vanilla clients and check your merged pack in game, including manual profiles, hitboxes and tooltips.
 
 ## Developer catalog
 
 Addons select a compiled sprite by updating the configured asset selector variable with `CanvasService.setVariablesAsync`. Supply real item tooltips separately with `setItemTooltip`, or declare a fixed `tooltip-item` reference. Include sprite references in the screen YAML installed by your addon bundle before reloading. `/cc assets vanilla` lists registered sprite examples.
-
-To regenerate the source catalog, run `tools/generate_sprite_catalog.py` with Pillow installed and repeat `--client version=/path/to/client.jar` for each supported client. The tool checks official Mojang client hashes and retains only direct static square textures with identical size/ink-width metrics across all supplied clients. It writes metadata without distributing vanilla textures.

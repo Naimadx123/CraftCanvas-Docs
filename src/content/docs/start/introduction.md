@@ -40,4 +40,4 @@ Start with the [developer quick start](/developers/quick-start/), then use the [
 | Compile configuration and observe the result | [Reloading](/developers/reload/) |
 | Listen for opening, closing and selection | [Events](/developers/events/) |
 
-The examples use schema 1 and the shipped `frame` screen. Whole-file examples can be copied directly; component and action fragments state where they belong. Matching vanilla clients are required. Review [renderer limits](/reference/book-renderer/) when designing layouts.
+The example screens use `schema-version: 1` and share the bundled `frame` layout. Keep `screens/frame.yml` installed when you try them. For the sizes and positions that work in a book, see [renderer limits](/reference/book-renderer/).

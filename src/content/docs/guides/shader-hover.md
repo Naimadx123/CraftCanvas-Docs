@@ -16,7 +16,7 @@ Reload and load the updated pack after changing hover settings. The effect needs
      hover: true
    ```
 
-2. Copy [the complete example](/examples/shader_hover.yml) to `plugins/CraftCanvas/screens/shader_hover.yml`. Keep the bundled `frame` screen and the standard `button`, `selected_frame`, `close` and `book_panel` PNGs/manifests. This extra example is outside the default screens. The bundled handheld examples already use automatic hover outlines on eligible application controls; physical A/B and Home/Exit controls explicitly opt out.
+2. Download [shader_hover.yml](/examples/shader_hover.yml) to `plugins/CraftCanvas/screens/`. The example uses the bundled `frame` screen and the `button`, `selected_frame`, `close` and `book_panel` images. Keep those files and their image definitions installed.
 3. Run `/cc reload`. A successful reload compiles the screen and builds a new pack. Unsupported server versions reject the setting. `/cc debug capabilities` shows whether the mode is enabled.
 4. Load the newly generated pack. With automatic Nexo export, CraftCanvas replaces its managed ZIP and requests a Nexo rebuild; wait for Nexo's merged pack to load. With standalone hosting, replace the hosted ZIP and send the new version through your configured sender.
 5. Run `/cc open shader_hover`. Move over FIRST and SECOND, click to change the persistent selection, and compare with LOCKED. The disabled button has its ordinary tooltip but no hover overlay or server action. The inherited Exit button closes the screen.

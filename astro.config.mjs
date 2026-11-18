@@ -13,7 +13,7 @@ export default defineConfig({
       title: 'CraftCanvas',
       description: 'Graphical Minecraft menus in YAML for Paper and Folia, with resource-pack artwork and a public Java/Kotlin API.',
       logo: { src: './src/assets/logo.svg', alt: 'CraftCanvas' },
-      social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Naimadx123/CraftCanvas' }],
+      social: [{ icon: 'github', label: 'Documentation on GitHub', href: 'https://github.com/Naimadx123/CraftCanvas-Docs' }],
       editLink: { baseUrl: 'https://github.com/Naimadx123/CraftCanvas-Docs/edit/main/' },
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
       sidebar: [

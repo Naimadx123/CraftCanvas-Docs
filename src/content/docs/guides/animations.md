@@ -427,16 +427,24 @@ These are overlay effects. Glitch does not distort or recolor the world's render
 
 ## Import a movie
 
-This finite title/HUD format accepts prepared PNG sequences rather than MP4 files. For unrestricted-duration playback with audio inside a screen, use [video at source FPS](#video-at-source-fps). At 24 FPS, 256 frames cover about 10.7 seconds. Reduce FPS or split longer footage into separate screens. Start with small frames such as 160 x 90: frame count/resolution increase pack size and GPU memory. Cinematic atlases have no fixed tile quota; the administrator may set an optional shared glyph budget.
+For a movie with sound inside a menu, use [MP4 playback](#video-at-source-fps). For a fullscreen cinematic, export the clip as a sequence of PNGs. A cinematic supports up to 256 frames, or about 10.7 seconds at 24 FPS.
 
-Create a `frames` directory and export a short clip using an external tool such as FFmpeg. Its [fps and scale filters](https://ffmpeg.org/ffmpeg-filters.html) control frame rate and dimensions:
+Create a `frames` folder and run the command below to export the first eight seconds of a clip. The command assumes a 16:9 video and produces 160 by 90 frames. For a different aspect ratio, change the dimensions to keep the picture in proportion. See [FFmpeg's filter guide](https://ffmpeg.org/ffmpeg-filters.html) for other sizing options.
 
-```text
-ffmpeg -n -i intro.mp4 -t 8 -vf "fps=24,scale=160:-2" frames/frame_%04d.png
-python tools/import_cinematic.py --frames frames --name intro --fps 24 --fit contain --output exported-intro
+```sh
+ffmpeg -n -i intro.mp4 -t 8 -vf "fps=24,scale=160:90" frames/frame_%04d.png
 ```
 
-The [importer](https://github.com/Naimadx123/CraftCanvas/blob/master/tools/import_cinematic.py) needs Python 3 without extra packages. It checks frame count, dimensions and the per-clip tile budget, gives files English numbered names, and writes a manifest plus screen YAML under `exported-intro/assets/` and `exported-intro/screens/`. Existing output resources are protected. Copy both directories into `plugins/CraftCanvas/`, reload, load the pack and run `/cc open cinematic_intro`. Reload checks the combined tile limit and decodes PNGs. Transparent movie pixels are composited over the background color. Use `actions.start` to start a sound with the movie. Sounds are not extracted from video or synchronized automatically.
+Copy the PNGs into `plugins/CraftCanvas/assets/intro/`. Register each one in `plugins/CraftCanvas/assets/intro.yml`, using its actual width and height. Here are the first two entries:
+
+```yaml
+schema-version: 1
+images:
+  craftcanvas:intro/0001: {file: intro/frame_0001.png, width: 160, height: 90}
+  craftcanvas:intro/0002: {file: intro/frame_0002.png, width: 160, height: 90}
+```
+
+Extract `clip.yml` from the [cinematic examples](/examples/cinematics.zip) and save it as `plugins/CraftCanvas/screens/intro.yml`. Set `id: intro` and `cinematic.fps: 24`. Replace the wheel IDs under `cinematic.frames` with your image IDs in playback order, starting with `craftcanvas:intro/0001` and `craftcanvas:intro/0002`. Run `/cc reload`, accept the updated pack, then run `/cc open intro`. To play a sound when the clip starts, add a sound action to `cinematic.actions.start`.
 
 ## Cinematic limitations
 
